@@ -21,6 +21,7 @@ import React from 'react';
 import { ConfigProvider, App as AntApp } from 'antd';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { antdCustomTheme } from './theme/antdTheme';
+import { ThemeProvider, useTheme } from './theme/ThemeProvider';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
@@ -118,8 +119,10 @@ const AppRoutes: React.FC = () => {
   );
 };
 
-export const App: React.FC = () => (
-  <ConfigProvider theme={antdCustomTheme}>
+const ThemedApp: React.FC = () => {
+  const { resolvedTheme } = useTheme();
+  return (
+  <ConfigProvider theme={antdCustomTheme(resolvedTheme)}>
     <AntApp>
       <BrowserRouter>
         <AuthProvider>
@@ -128,4 +131,7 @@ export const App: React.FC = () => (
       </BrowserRouter>
     </AntApp>
   </ConfigProvider>
-);
+  );
+};
+
+export const App: React.FC = () => <ThemeProvider><ThemedApp /></ThemeProvider>;

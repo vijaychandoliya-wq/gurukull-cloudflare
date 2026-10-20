@@ -13,6 +13,7 @@
     "dev:api": "npm --workspace=workers/api run dev",
     "build": "npm run --workspaces --if-present build",
     "test": "vitest run",
+    "test:theme": "vitest run apps/portal/source/src/theme/themePreference.test.ts",
     "lint": "npm run --workspaces --if-present lint"
   },
   "devDependencies": {

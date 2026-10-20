@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { ThemeSwitcher } from '../components/ThemeSwitcher';
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -76,6 +77,7 @@ export const LoginPage: React.FC = () => {
       </section>
 
       <section className="gk-login-form-panel">
+        <div className="gk-login-appearance"><ThemeSwitcher /></div>
         <div className="gk-login-mobile-brand">
           <Link to="/login" className="gk-login-wordmark gk-login-wordmark-mobile" aria-label="Gurukul home">
             <span className="gk-login-mark">GK</span>

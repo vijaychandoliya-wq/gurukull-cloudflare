@@ -1,0 +1,42 @@
+:root {
+  color-scheme: light;
+  --gk-canvas: #fafafa;
+  --gk-surface: #ffffff;
+  --gk-surface-raised: #ffffff;
+  --gk-surface-inset: #f5f5f5;
+  --gk-surface-hover: #f0f0f0;
+  --gk-surface-selected: #eaeaea;
+  --gk-border: #e5e5e5;
+  --gk-border-strong: #a3a3a3;
+  --gk-text-primary: #171717;
+  --gk-text-secondary: #525252;
+  --gk-text-muted: #666666;
+  --gk-focus: #2563eb;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --gk-canvas: #000000;
+  --gk-surface: #0a0a0a;
+  --gk-surface-raised: #111111;
+  --gk-surface-inset: #171717;
+  --gk-surface-hover: #1f1f1f;
+  --gk-surface-selected: #252525;
+  --gk-border: #2e2e2e;
+  --gk-border-strong: #737373;
+  --gk-text-primary: #ededed;
+  --gk-text-secondary: #a3a3a3;
+  --gk-text-muted: #929292;
+  --gk-focus: #70b8ff;
+}
+
+html, body, #root { min-height: 100%; }
+html, body { background: var(--gk-canvas); color: var(--gk-text-primary); }
+body { transition: background-color 160ms ease, color 160ms ease; }
+:where(button, a, input, textarea, select, [role='button']):focus-visible {
+  outline: 2px solid var(--gk-focus);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

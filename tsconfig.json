@@ -11,5 +11,11 @@
     "noEmit": true,
     "esModuleInterop": true
   },
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "packages/**/*.ts",
+    "workers/**/*.ts",
+    "tools/backup/src/**/*.ts",
+    "tools/auth-probe/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "apps/portal", "tools/import"]
 }

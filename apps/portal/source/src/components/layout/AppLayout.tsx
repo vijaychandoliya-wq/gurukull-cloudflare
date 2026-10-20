@@ -30,6 +30,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
+import { ThemeSwitcher } from '../ThemeSwitcher';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -221,6 +222,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           </Space>
 
           <Space size="middle">
+            <ThemeSwitcher compact />
             <Badge dot>
               <Button type="text" shape="circle" icon={<NotificationOutlined />} onClick={() => navigate('/notices')} aria-label="Notifications" />
             </Badge>

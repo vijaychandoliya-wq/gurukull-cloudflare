@@ -3,6 +3,7 @@ import { Alert, Button, Card, Form, Input, Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../services/api';
+import { ThemeSwitcher } from '../components/ThemeSwitcher';
 
 export const EnrollmentPage: React.FC = () => {
  const [busy,setBusy]=useState(false),[error,setError]=useState<string|null>(null),[completed,setCompleted]=useState<string|null>(null);
@@ -16,7 +17,7 @@ export const EnrollmentPage: React.FC = () => {
    setError(code==='FREE_ENROLLMENT_CPU_VERIFICATION_REQUIRED'?'Secure administrator enrollment is awaiting the authentication performance check. Your invitation has not been consumed.':code==='ENROLLMENT_INVALID_OR_EXPIRED'?'The invitation is invalid, expired, revoked or already used. Request a new invitation from the platform owner.':e.response?.data?.message||'Enrollment could not be completed.');
   }finally{setBusy(false);}
  };
- return <main style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'#f5f7fb',padding:16}}><Card style={{width:'100%',maxWidth:480}}>
+ return <main className="gk-enrollment-page" style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'var(--gk-canvas)',padding:16}}><div className="gk-enrollment-appearance"><ThemeSwitcher /></div><Card style={{width:'100%',maxWidth:480}}>
   <Typography.Title level={3}>Administrator enrollment</Typography.Title>
   <Typography.Paragraph>Use the private, single-use invitation provided by the platform owner and choose your own password. Invitations expire after 24 hours.</Typography.Paragraph>
   {error&&<Alert type="error" showIcon message={error} style={{marginBottom:16}}/>}

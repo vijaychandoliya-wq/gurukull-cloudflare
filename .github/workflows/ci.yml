@@ -21,6 +21,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm --prefix apps/portal/source ci
+      - run: npm --prefix apps/portal/source run build
       - run: npm test
       - run: npx tsc --noEmit
       - name: Validate Worker bundle
