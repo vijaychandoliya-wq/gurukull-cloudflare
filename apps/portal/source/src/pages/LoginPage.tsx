@@ -96,7 +96,7 @@ export const LoginPage: React.FC = () => {
             <Form.Item name="schoolCode" label="School code" rules={[{ required: true, message: 'Enter your school code' }]}>
               <Input size="large" prefix={<BankOutlined />} placeholder="e.g. 108" autoComplete="organization" autoCapitalize="characters" />
             </Form.Item>
-            <Form.Item name="identifier" label="Mobile number or email address" rules={[{ required: true, message: 'Enter your mobile number or email address' }]}> 
+            <Form.Item name="identifier" label="Mobile number or email address" rules={[{ required: true, message: 'Enter your mobile number or email address' }]}>
               <Input size="large" prefix={<MailOutlined />} placeholder="8056745614 or name@school.com" autoComplete="username" />
             </Form.Item>
             <Form.Item name="password" label="Password or administrator access key" rules={[{ required: true, message: 'Enter your password or access key' }]}>

@@ -315,7 +315,6 @@ export const StudentsPage: React.FC = () => {
               options={[
                 { value: 'active', label: 'Active' },
                 { value: 'inactive', label: 'Inactive' },
-                
                 { value: 'all', label: 'All' },
               ]}
             />
