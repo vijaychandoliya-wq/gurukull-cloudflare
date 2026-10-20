@@ -1,7 +1,7 @@
 import {readFile,readdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {resolve,dirname} from 'node:path';
-const dist=resolve(dirname(fileURLToPath(import.meta.url)),'../../gurukul-ant-web/dist');
+const dist=resolve(dirname(fileURLToPath(import.meta.url)),'../apps/portal/source/dist');
 const html=await readFile(resolve(dist,'index.html'),'utf8');
 const assets=[...html.matchAll(/(?:src|href)="(\/assets\/[^"]+\.js)"/g)].map(m=>m[1]);
 if(!assets.length)throw new Error('Portal has no built JavaScript assets');
