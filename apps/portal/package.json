@@ -4,6 +4,6 @@
   "private": true,
   "description": "Gurukul school portal served through API Worker Static Assets",
   "scripts": {
-    "build": "cd ../../../gurukul-ant-web && VITE_API_URL= npm run build && node ../cloudflare/tools/verify-portal-build.mjs"
+    "build": "npm --prefix source run build && node ../../tools/verify-portal-build.mjs"
   }
 }

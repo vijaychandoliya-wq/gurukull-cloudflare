@@ -25,10 +25,10 @@ TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull
 ALLOWED_ORIGINS = "https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in,https://gurukul-worker-api.gurukull.workers.dev,https://rajesh.gurukull.in,https://mggs.gurukull.in"
 
 [build]
-command = "VITE_API_URL= npm --prefix ../../../gurukul-ant-web run build && node ../../tools/verify-portal-build.mjs"
+command = "npm --prefix ../../apps/portal/source run build && node ../../tools/verify-portal-build.mjs"
 
 [assets]
-directory = "../../../gurukul-ant-web/dist"
+directory = "../../apps/portal/source/dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = ["/api", "/api/*", "/v2", "/v2/*", "/platform", "/platform/*", "/health", "/parent/login"]

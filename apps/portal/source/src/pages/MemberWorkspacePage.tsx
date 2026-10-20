@@ -1,0 +1,9 @@
+import {BorrowerLoans} from './BorrowerLoans';
+import React,{useEffect,useState} from 'react';
+import {Alert,Card,Descriptions,Space,Table,Typography} from 'antd';
+import {apiClient} from '../services/api';
+export const MemberWorkspacePage:React.FC=()=>{
+ const [data,setData]=useState<any>(),[error,setError]=useState<string|null>(null);
+ useEffect(()=>{let done=false;apiClient.get('/api/portal/workspace').then(r=>{if(!done)setData(r.data.data);}).catch(e=>{if(!done)setError(e.response?.data?.message||'Your workspace could not be loaded.');});return()=>{done=true;};},[]);
+ return <Space direction="vertical" style={{width:'100%'}}><Typography.Title level={3}>{data?.user?.type||'School member'} workspace</Typography.Title>{error&&<Alert type="error" showIcon message={error}/>}<Card title="My account" loading={!data&&!error}><Descriptions column={1} items={data?['name','email','mobile','type'].map(k=>({key:k,label:k,children:data.user[k]||'Not supplied'})):[]}/></Card>{data?.user?.type==='teacher'&&<><Card title="My assigned classes"><Table rowKey="id" dataSource={data.classes} columns={[{title:'Class',dataIndex:'className'},{title:'Section',dataIndex:'sectionName'},{title:'Subject',dataIndex:'subject'}]}/></Card><Card title="My timetable"><Table rowKey={(r:any)=>`${r.day}-${r.period}`} dataSource={data.timetable} columns={['day','period','subject','className','sectionName','startTime','endTime','room'].map(k=>({title:k,dataIndex:k}))}/></Card></>}{data?.user?.type==='parent'&&<Card title="My linked children"><Table rowKey="id" dataSource={data.children} columns={['name','className','sectionName'].map(k=>({title:k,dataIndex:k}))}/></Card>}{['teacher','staff'].includes(data?.user?.type)&&<BorrowerLoans/>}<Alert type="info" showIcon message="Your permissions come from the server" description="Administrator records and other people’s private data are not included in this workspace."/></Space>;
+};

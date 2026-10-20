@@ -1,0 +1,244 @@
+.gk-shell { min-width: 0; min-height: 100vh; overflow-x: hidden; }
+.gk-login-page { width: 100%; min-width: 0; min-height: 100vh; display: grid; grid-template-columns: minmax(420px, 1.08fr) minmax(480px, .92fr); overflow-x: hidden; background: #f5f7fb; }
+.gk-login-brand-panel { position: relative; min-height: 100vh; overflow: hidden; color: #fff; background: linear-gradient(145deg, #0b2456 0%, #123d91 52%, #2563eb 100%); }
+.gk-login-brand-panel::before { position: absolute; inset: 0; content: ''; opacity: .16; background-image: linear-gradient(rgba(255,255,255,.22) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px); background-size: 44px 44px; mask-image: linear-gradient(to bottom right, #000, transparent 72%); }
+.gk-login-orb { position: absolute; border-radius: 999px; filter: blur(2px); pointer-events: none; }
+.gk-login-orb-one { width: 360px; height: 360px; top: -160px; right: -100px; background: rgba(56, 189, 248, .23); }
+.gk-login-orb-two { width: 460px; height: 460px; right: -210px; bottom: -240px; background: rgba(45, 212, 191, .18); }
+.gk-login-brand-content { position: relative; z-index: 1; width: min(720px, 100%); min-height: 100vh; padding: clamp(36px, 5vw, 72px); }
+.gk-login-wordmark { width: fit-content; display: inline-flex; align-items: center; gap: 12px; color: #fff; text-decoration: none; }
+.gk-login-wordmark:hover { color: #fff; }
+.gk-login-mark { width: 46px; height: 46px; display: grid; place-items: center; color: #17428f; background: #fff; border-radius: 13px; box-shadow: 0 12px 30px rgba(4, 21, 56, .28); font-weight: 800; letter-spacing: -.5px; }
+.gk-login-wordmark > span:last-child { display: flex; flex-direction: column; line-height: 1.25; }
+.gk-login-wordmark strong { color: inherit; font-size: 19px; }
+.gk-login-wordmark small { margin-top: 2px; color: rgba(255, 255, 255, .68); font-size: 11px; letter-spacing: .8px; text-transform: uppercase; }
+.gk-login-intro { max-width: 590px; margin: clamp(54px, 8vh, 100px) 0; }
+.gk-login-intro .ant-tag { margin-bottom: 24px; color: #dbeafe; background: rgba(255,255,255,.1); font-weight: 700; letter-spacing: .7px; }
+.gk-login-intro h1.ant-typography { max-width: 570px; margin: 0 0 20px; color: #fff; font-size: clamp(42px, 5vw, 68px); line-height: 1.04; letter-spacing: -2.5px; }
+.gk-login-intro > .ant-typography { max-width: 560px; margin: 0 0 38px; color: rgba(255,255,255,.76); font-size: 17px; line-height: 1.7; }
+.gk-login-benefits { width: 100%; }
+.gk-login-benefit-icon { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; color: #bfdbfe; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.12); border-radius: 11px; font-size: 18px; }
+.gk-login-benefits .ant-typography { display: block; color: #fff; font-size: 14px; }
+.gk-login-benefits small { display: block; max-width: 430px; margin-top: 4px; color: rgba(255,255,255,.62); font-size: 13px; line-height: 1.5; }
+.gk-login-trust { color: rgba(255,255,255,.7); font-size: 12px; letter-spacing: .25px; }
+.gk-login-trust .anticon { margin-right: 8px; color: #5eead4; }
+.gk-login-form-panel { width: 100%; min-width: 0; min-height: 100vh; padding: 48px clamp(28px, 6vw, 88px); display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
+.gk-login-mobile-brand { display: none; }
+.gk-login-card { width: min(480px, 100%); min-width: 0; max-width: 100%; background: transparent; box-shadow: none; }
+.gk-login-card .ant-card-body { min-width: 0; padding: 0; }
+.gk-login-back { display: inline-flex; align-items: center; gap: 7px; margin-bottom: clamp(40px, 8vh, 78px); color: #667085; font-size: 13px; }
+.gk-login-heading { margin-bottom: 30px; }
+.gk-login-heading h2.ant-typography { margin: 0 0 8px; font-size: 34px; letter-spacing: -1px; }
+.gk-auth-card-wide { width: min(680px, 100%); }
+.gk-auth-form-panel-wide { padding-top: 36px; padding-bottom: 36px; }
+.gk-auth-role-list { margin: -14px 0 22px; }
+.gk-login-alert { margin-bottom: 22px; }
+.gk-login-form { display: flex; flex-direction: column; gap: 22px; }
+.gk-login-field { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.gk-login-field label { color: #344054; font-size: 13px; font-weight: 650; }
+.gk-auth-field-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gk-login-field .ant-input-affix-wrapper { width: 100%; min-width: 0; max-width: 100%; min-height: 48px; background: #fff; border-color: #d0d5dd; box-shadow: 0 1px 2px rgba(16, 24, 40, .04); }
+.gk-login-field .ant-input-prefix { margin-right: 10px; color: #98a2b3; }
+.gk-login-error { font-size: 12px; }
+.gk-auth-help-text { font-size: 12px; }
+.gk-auth-form-note { display: block; font-size: 12px; line-height: 1.6; text-align: center; }
+.gk-auth-consent { display: flex; flex-direction: column; gap: 6px; }
+.gk-auth-recaptcha { display: flex; flex-direction: column; gap: 6px; }
+.gk-auth-switch { display: block; text-align: center; }
+.gk-login-submit { height: 48px; margin-top: 6px; font-weight: 700; box-shadow: 0 8px 18px rgba(37, 99, 235, .22); }
+.gk-login-help { text-align: center; }
+.gk-login-help .anticon { color: #2563eb; }
+.gk-login-footer { margin-top: 36px; font-size: 11px; text-align: center; }
+.gk-shell > .ant-layout { min-width: 0; }
+.gk-sider { position: sticky !important; top: 0; height: 100vh; border-right: 1px solid #eaecf0; overflow: hidden; z-index: 10; }
+.gk-sider .ant-layout-sider-children { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.gk-sider .ant-menu { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; padding: 8px 0 18px; }
+.gk-brand { height: 76px; padding: 0 18px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #f0f2f5; }
+.gk-brand-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.4; }
+.gk-header { position: sticky; top: 0; z-index: 9; height: 76px; padding: 0 24px; border-bottom: 1px solid #eaecf0; }
+.gk-header-inner { height: 100%; }
+.gk-global-search { width: min(360px, 34vw); }
+.gk-profile-button { height: auto; padding: 4px 8px; }
+.gk-profile-copy { display: inline-flex; flex-direction: column; text-align: left; line-height: 1.25; }
+.gk-content { padding: 24px; min-width: 0; }
+.gk-card-link-wrapper { display: block; color: inherit; text-decoration: none; }
+.gk-card-link-wrapper:hover { color: inherit; }
+.gk-metric-card .ant-statistic-title { margin-bottom: 6px; color: #667085; font-size: 12px; font-weight: 700; letter-spacing: .35px; text-transform: uppercase; }
+.gk-metric-card .ant-statistic-content { color: #172033; font-size: 30px; font-weight: 750; letter-spacing: -.8px; }
+.gk-login-form .ant-form-item { margin-bottom: 0; }
+.gk-login-form .ant-form-item-label { padding-bottom: 8px; }
+.gk-login-form .ant-form-item-label > label { color: #344054; font-size: 13px; font-weight: 650; }
+.gk-login-form .ant-input-affix-wrapper { min-height: 48px; }
+.gk-login-form .ant-form-item-explain-error { margin-top: 6px; font-size: 12px; }
+.gk-login-form .ant-form-item-control-input-content > .ant-input { min-height: 48px; }
+.gk-login-form .ant-form-item-control-input-content > .ant-input-affix-wrapper { width: 100%; }
+.gk-dashboard-list .ant-list-item { gap: 16px; }
+.gk-admission-page { min-height: 100vh; color: #172033; background: linear-gradient(180deg, #eef4ff 0, #f7f9fc 300px, #f7f9fc 100%); }
+.gk-admission-header { position: sticky; top: 0; z-index: 10; padding: 14px clamp(18px, 5vw, 64px); background: rgba(255,255,255,.94); border-bottom: 1px solid #e6eaf0; backdrop-filter: blur(12px); }
+.gk-admission-brand { min-width: 0; display: flex; align-items: center; gap: 12px; color: inherit; }
+.gk-admission-brand > div:last-child { min-width: 0; display: flex; flex-direction: column; line-height: 1.35; }
+.gk-admission-main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 54px 0 72px; }
+.gk-admission-intro { max-width: 720px; margin-bottom: 28px; }
+.gk-admission-intro h1 { margin: 7px 0 12px; font-size: clamp(34px, 5vw, 52px); line-height: 1.08; letter-spacing: -1.6px; }
+.gk-admission-intro .ant-typography { font-size: 16px; line-height: 1.7; }
+.gk-admission-kicker { color: #2563eb; font-size: 12px !important; font-weight: 800; letter-spacing: 1.5px; }
+.gk-admission-card { overflow: hidden; border-color: #e0e6ef; box-shadow: 0 18px 55px rgba(31, 50, 82, .09); }
+.gk-admission-card .ant-card-body { padding: clamp(20px, 4vw, 40px); }
+.gk-admission-steps { margin-bottom: 4px; }
+.gk-admission-card section[hidden] { display: none; }
+.gk-admission-section-title { margin: 6px 0 24px; }
+.gk-admission-section-title h4 { margin: 0 0 4px; }
+.gk-admission-result { width: min(720px, calc(100% - 32px)); margin: 0 auto; padding: 12vh 0; }
+.gk-admission-result .ant-result { background: #fff; border: 1px solid #e0e6ef; border-radius: 18px; box-shadow: 0 18px 55px rgba(31, 50, 82, .09); }
+.gk-admission-footer { padding: 24px; color: #667085; font-size: 12px; text-align: center; border-top: 1px solid #e6eaf0; background: #fff; }
+.gk-teacher-shell .gk-brand { background: linear-gradient(135deg, #f8fbff, #fffaf2); }
+.gk-teacher-shell .ant-card { height: 100%; }
+.gk-teacher-shell .ant-statistic-content-prefix { color: #073559; }
+.gk-page-heading { margin-bottom: 20px; }
+.gk-page-heading h2 { margin: 0 0 4px; }
+.gk-migration-alert { margin-bottom: 20px; }
+.gk-report-card .ant-card-body { padding-top: 4px; padding-bottom: 4px; }
+.gk-report-row { min-height: 86px; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+.gk-report-row:last-child { border-bottom: 0; }
+.gk-report-icon { margin-top: 4px; color: #1677ff; font-size: 18px; }
+.gk-metric-card { position: relative; overflow: hidden; }
+.gk-card-link { position: absolute; inset: 0; z-index: 1; }
+.gk-metric-icon { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; }
+.gk-dashboard-row { margin-top: 16px; }
+.gk-equal-card { height: 100%; min-height: 360px; }
+.gk-list-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: #2563eb; background: #eff6ff; }
+.gk-list-icon-warning { color: #d97706; background: #fffbeb; }
+.gk-list-description { margin: 4px 0 !important; }
+.gk-table-toolbar { margin-bottom: 16px; }
+.gk-student-search { width: min(520px, 100%); }
+.gk-teacher-summary { margin-bottom: 16px; }
+.gk-teacher-class-card { min-height: 286px; }
+.gk-teacher-class-card .ant-card-actions a { display: block; font-weight: 600; }
+.gk-name-button { height: auto; padding: 0; font-weight: 600; text-align: left; }
+.gk-form-steps { margin-bottom: 28px; }
+.gk-student-form-drawer section[hidden] { display: none; }
+.gk-student-form-drawer .ant-drawer-body { padding-bottom: 40px; }
+.gk-profile-back { padding-left: 0; margin-bottom: 4px; }
+.gk-profile-hero { margin-bottom: 16px; overflow: hidden; }
+.gk-profile-tabs-card .ant-card-body { padding-top: 8px; }
+.gk-profile-section-card { height: 100%; }
+.gk-profile-notes { margin: 4px 0 0 !important; white-space: pre-wrap; }
+.gk-id-print-sheet { display: grid; grid-template-columns: repeat(2, minmax(0, 340px)); justify-content: center; gap: 18px; padding: 4px; }
+.gk-id-card { width: 340px; aspect-ratio: 1.585 / 1; overflow: hidden; display: flex; flex-direction: column; color: #172033; background: #fff; border: 1px solid #cfd6e4; border-radius: 12px; box-shadow: 0 6px 18px rgba(31, 43, 68, .11); }
+.gk-id-card-header { position: relative; min-height: 54px; padding: 9px 12px; display: flex; align-items: center; gap: 9px; overflow: hidden; color: #fff; background: linear-gradient(125deg, #123d91 0%, #2563eb 56%, #0f9f9a 100%); }
+.gk-id-card-school { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.gk-id-card-school strong { max-width: 235px; overflow: hidden; color: #fff; font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+.gk-id-card-school span { margin-top: 2px; color: rgba(255, 255, 255, .82); font-size: 8px; text-transform: uppercase; letter-spacing: .55px; }
+.gk-id-card-watermark { position: absolute; right: -5px; bottom: -11px; color: rgba(255, 255, 255, .14); font-size: 58px; transform: rotate(-8deg); }
+.gk-id-card-body { flex: 1; min-height: 0; padding: 10px 12px 7px; display: flex; gap: 11px; background: radial-gradient(circle at 100% 0, #eef6ff 0, transparent 42%); }
+.gk-id-card-photo { position: relative; flex: 0 0 76px; height: 92px; display: grid; place-items: center; overflow: hidden; color: #31528c; background: #e9f1ff; border: 2px solid #d8e5fb; border-radius: 8px; font-size: 23px; font-weight: 700; }
+.gk-id-card-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gk-id-card-details { flex: 1; min-width: 0; }
+.gk-id-card-details h3 { margin: 0 0 6px; overflow: hidden; color: #10234a; font-size: 13px; line-height: 1.25; white-space: nowrap; text-overflow: ellipsis; }
+.gk-id-card-grid { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 3px 5px; font-size: 8.5px; line-height: 1.22; }
+.gk-id-card-grid span { color: #718096; }
+.gk-id-card-grid strong { overflow: hidden; color: #26354f; white-space: nowrap; text-overflow: ellipsis; }
+.gk-id-card-footer { min-height: 27px; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #667085; background: #f8fafc; border-top: 1px solid #e8edf5; font-size: 7.5px; }
+.gk-id-card-footer span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.gk-id-card-footer strong { flex: 0 0 auto; color: #334155; font-size: 7.5px; font-style: italic; }
+.gk-bus-print-sheet { display: grid; grid-template-columns: repeat(2, minmax(0, 560px)); justify-content: center; gap: 20px; padding: 4px; }
+.gk-bus-pass { position: relative; width: 560px; aspect-ratio: 1.55 / 1; overflow: hidden; display: flex; flex-direction: column; color: #172033; background: #fff; border: 1px solid #cbd5e1; border-radius: 14px; box-shadow: 0 8px 24px rgba(30, 41, 59, .12); }
+.gk-bus-pass-header { min-height: 66px; padding: 11px 15px; display: flex; align-items: center; gap: 11px; color: #fff; background: linear-gradient(120deg, #123d91 0%, #2563eb 52%, #0891b2 100%); }
+.gk-bus-pass-school { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.gk-bus-pass-school strong { max-width: 330px; overflow: hidden; color: #fff; font-size: 14px; white-space: nowrap; text-overflow: ellipsis; }
+.gk-bus-pass-school span { margin-top: 3px; color: rgba(255, 255, 255, .82); font-size: 9px; }
+.gk-bus-pass-title { flex: 0 0 auto; padding-left: 15px; display: flex; flex-direction: column; align-items: flex-end; border-left: 1px solid rgba(255, 255, 255, .28); }
+.gk-bus-pass-title strong { color: #fff; font-size: 18px; letter-spacing: 1.5px; }
+.gk-bus-pass-title span { color: rgba(255, 255, 255, .82); font-size: 10px; }
+.gk-bus-pass-body { position: relative; min-height: 132px; padding: 13px 16px 10px; display: flex; gap: 14px; background: radial-gradient(circle at 100% 0, #e0f2fe 0, transparent 42%); }
+.gk-bus-pass-photo { position: relative; flex: 0 0 88px; height: 108px; display: grid; place-items: center; overflow: hidden; color: #31528c; background: #e9f1ff; border: 2px solid #d8e5fb; border-radius: 9px; font-size: 25px; font-weight: 700; }
+.gk-bus-pass-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gk-bus-pass-details { flex: 1; min-width: 0; padding-right: 54px; }
+.gk-bus-pass-details h3 { margin: 0 0 7px; overflow: hidden; color: #10234a; font-size: 16px; line-height: 1.25; white-space: nowrap; text-overflow: ellipsis; }
+.gk-bus-pass-grid { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 4px 7px; font-size: 10px; line-height: 1.25; }
+.gk-bus-pass-grid span { color: #718096; }
+.gk-bus-pass-grid strong { overflow: hidden; color: #26354f; white-space: nowrap; text-overflow: ellipsis; }
+.gk-bus-pass-status { position: absolute; top: 13px; right: 14px; padding: 4px 7px; border-radius: 999px; font-size: 8px; font-weight: 800; letter-spacing: .8px; }
+.gk-bus-pass-status.is-active { color: #087443; background: #dcfce7; border: 1px solid #86efac; }
+.gk-bus-pass-status.is-draft { color: #9a3412; background: #ffedd5; border: 1px solid #fdba74; }
+.gk-bus-pass-months { margin: 0 16px; display: grid; grid-template-columns: repeat(12, 1fr); border-top: 1px solid #cbd5e1; border-left: 1px solid #cbd5e1; }
+.gk-bus-pass-months > div { min-width: 0; height: 46px; display: flex; flex-direction: column; border-right: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; }
+.gk-bus-pass-months strong { padding: 3px 1px; color: #475569; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; font-size: 7px; text-align: center; text-transform: uppercase; }
+.gk-bus-pass-months span { flex: 1; }
+.gk-bus-pass-footer { flex: 1; min-height: 31px; padding: 7px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #667085; font-size: 8px; }
+.gk-bus-pass-footer strong { flex: 0 0 auto; color: #334155; font-size: 8px; font-style: italic; }
+
+@media (max-width: 767px) {
+    .gk-login-page { display: block; min-height: 100vh; }
+    .gk-login-brand-panel { display: none; }
+    .gk-login-form-panel { min-height: 100vh; padding: 28px 20px 24px; justify-content: flex-start; }
+    .gk-login-mobile-brand { width: 100%; min-width: 0; max-width: 100%; margin-bottom: 52px; display: block; }
+    .gk-login-card { width: 100%; }
+    .gk-login-field > .ant-flex { flex-wrap: wrap; }
+    .gk-login-footer { width: 100%; max-width: 100%; overflow-wrap: anywhere; }
+    .gk-login-wordmark-mobile { color: #172033; }
+    .gk-login-wordmark-mobile:hover { color: #172033; }
+    .gk-login-wordmark-mobile .gk-login-mark { color: #fff; background: #2563eb; }
+    .gk-login-wordmark-mobile small { color: #667085; }
+    .gk-login-back { margin-bottom: 34px; }
+    .gk-login-heading h2.ant-typography { font-size: 30px; }
+    .gk-login-footer { margin-top: auto; padding-top: 32px; }
+    .gk-header { padding: 0 12px; }
+    .gk-content { padding: 16px 12px; }
+    .gk-admission-header { position: static; padding: 12px 16px; }
+    .gk-admission-header > .ant-flex > .ant-space { display: none; }
+    .gk-admission-main { width: min(100% - 24px, 1120px); padding: 34px 0 50px; }
+    .gk-admission-card .ant-card-body { padding: 18px 14px 22px; }
+    .gk-admission-steps .ant-steps-item-title { font-size: 11px; }
+    .gk-global-search { display: none; }
+    .gk-profile-copy { display: none; }
+    .gk-legacy-header { display: none; }
+    .gk-equal-card { min-height: auto; }
+    .gk-student-form-drawer .ant-drawer-content-wrapper { width: 100vw !important; max-width: 100vw; }
+    .gk-student-form-drawer .ant-drawer-body { padding: 16px 12px 32px; }
+    .gk-profile-tabs-card .ant-card-body { padding: 8px 12px 16px; }
+    .gk-attendance-roster-card .ant-card-head-wrapper { align-items: flex-start; flex-direction: column; gap: 12px; }
+    .gk-attendance-roster-card .ant-card-extra { width: 100%; margin-left: 0; }
+    .gk-id-print-sheet { grid-template-columns: minmax(0, 340px); justify-content: start; overflow-x: auto; }
+    .gk-bus-print-sheet { grid-template-columns: minmax(0, 560px); justify-content: start; overflow-x: auto; }
+}
+
+@media (min-width: 768px) and (max-width: 1080px) {
+    .gk-login-page { grid-template-columns: minmax(340px, .88fr) minmax(430px, 1.12fr); }
+    .gk-login-brand-content { padding: 42px; }
+    .gk-login-intro h1.ant-typography { font-size: 48px; }
+    .gk-login-intro > .ant-typography { font-size: 15px; }
+    .gk-login-form-panel { padding: 42px; }
+}
+
+@media print {
+    @page { size: A4 portrait; margin: 8mm; }
+    body { margin: 0 !important; background: #fff !important; }
+    body * { visibility: hidden !important; }
+    .gk-id-print-sheet,
+    .gk-id-print-sheet *,
+    .gk-bus-print-sheet,
+    .gk-bus-print-sheet *,
+    .gk-cert-print-sheet,
+    .gk-cert-print-sheet * { visibility: visible !important; }
+    .gk-id-print-sheet { position: absolute; top: 0; left: 0; width: 100%; padding: 0; display: grid; grid-template-columns: repeat(2, 85.6mm); grid-auto-rows: 54mm; justify-content: center; align-content: start; gap: 4mm; }
+    .gk-id-card { width: 85.6mm; height: 54mm; aspect-ratio: auto; break-inside: avoid; page-break-inside: avoid; border-radius: 2.5mm; box-shadow: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .gk-id-card:nth-child(8n) { break-after: page; page-break-after: always; }
+    .gk-id-print-note { display: none !important; }
+    .gk-bus-print-sheet { position: absolute; top: 0; left: 0; width: 100%; padding: 0; display: grid; grid-template-columns: 140mm; grid-auto-rows: 90mm; justify-content: center; align-content: start; gap: 6mm; }
+    .gk-bus-pass { width: 140mm; height: 90mm; aspect-ratio: auto; break-inside: avoid; page-break-inside: avoid; border-radius: 3mm; box-shadow: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .gk-bus-pass:nth-child(2n) { break-after: page; page-break-after: always; }
+    .gk-bus-print-note { display: none !important; }
+    .gk-cert-print-sheet {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 4mm !important;
+        background: #fff !important;
+        box-sizing: border-box !important;
+    }
+}
+
