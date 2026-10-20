@@ -1,0 +1,19 @@
+name = "gurukul-jobs"
+main = "src/index.ts"
+compatibility_date = "2024-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+account_id = "e640cac6d5f89a87e7c952f4b3669af0"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gurukul-d1-prod"
+database_id = "70b2a68a-d0c8-47b6-8837-c66eef4c19e0"
+
+[[kv_namespaces]]
+binding = "KV_CACHE"
+id = "9031e5a4b0bf4c18b69e8c1d713f8620"
+

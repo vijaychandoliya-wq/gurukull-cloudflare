@@ -1,0 +1,25 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {randomBytes,randomUUID,createHmac} from 'node:crypto';
+import {resolve} from 'node:path';
+// No user-selected passwords and no public API issuance. A private, owner-reviewed file only.
+const [identityPath,secretPath,outputDirectory]=process.argv.slice(2);
+if(!identityPath||!secretPath||!outputDirectory)throw new Error('Usage: node prepare-access-admin.mjs <real-identity.json> <private-secret-file> <new-private-output-directory>');
+const input=JSON.parse(await readFile(identityPath,'utf8')),secret=(await readFile(secretPath,'utf8')).trim();
+const name=typeof input.fullName==='string'?input.fullName.trim():'';
+const email=typeof input.email==='string'&&input.email.trim()?input.email.trim().toLowerCase():null;
+const mobile=typeof input.mobile==='string'&&input.mobile.trim()?input.mobile.trim():null;
+const schoolCode=typeof input.schoolCode==='string'?input.schoolCode.trim().toUpperCase():'';
+const schoolId=typeof input.schoolId==='string'?input.schoolId:'';
+if(!name||name.length>160||!/^[A-Z0-9_-]{2,20}$/.test(schoolCode)||!schoolId)throw new Error('Genuine administrator name and verified school ID/code required');
+if((!email&&!mobile)||(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))||(mobile&&!/^\+?[0-9]{7,15}$/.test(mobile)))throw new Error('Real valid administrator contact required');
+if(email?.endsWith('.invalid')||email?.endsWith('@example.com')||email?.endsWith('@example.org'))throw new Error('Persistent test identities are prohibited');
+if(Buffer.byteLength(secret)<32)throw new Error('Administrator secret requires at least 32 bytes');
+const userId=randomUUID(),requestId=randomUUID(),credentialId=randomUUID(),now=Math.floor(Date.now()/1000),expires=now+7776000;
+const accessKey='gka1_'+randomBytes(32).toString('base64url');
+const digest=createHmac('sha256',secret).update(JSON.stringify(['gurukull-admin-access-v1',schoolId,userId,accessKey])).digest('base64url');
+const q=v=>v===null?'NULL':"'"+String(v).replaceAll("'","''")+"'";
+const sql=`-- Genuine administrator requested by owner. Atomic credential/user/role creation, no school activation.\nINSERT INTO owner_admin_access_requests(id,school_id,user_id,credential_id,credential_digest,full_name,email,mobile,created_at,expires_at) VALUES(${q(requestId)},(SELECT id FROM schools WHERE id=${q(schoolId)} AND code=${q(schoolCode)} AND status IN ('configuration_needed','administrator_pending','active')),${q(userId)},${q(credentialId)},${q(digest)},${q(name)},${q(email)},${q(mobile)},${now},${expires});\n`;
+const dir=resolve(outputDirectory);await mkdir(dir,{recursive:false,mode:0o700});
+await writeFile(resolve(dir,'administrator.sql'),sql,{mode:0o600,flag:'wx'});
+await writeFile(resolve(dir,'credentials.json'),JSON.stringify({fullName:name,schoolCode,identifier:email||mobile,accessKey,userId,credentialId,expiresAt:new Date(expires*1000).toISOString(),url:'https://gurukul-worker-api.gurukull.workers.dev/login',note:'Store this access key in your password manager. Enter it in the Password or administrator access key field. Unconfigured schools receive a restricted setup session, not active ERP access.'},null,2),{mode:0o600,flag:'wx'});
+console.log('Prepared private administrator.sql and credentials.json; no account written and no credential printed.');

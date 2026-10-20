@@ -1,0 +1,20 @@
+{
+  "name": "@gurukul/tools-backup",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Gurukul D1 Logical Backup and Recovery Manifest Engine",
+  "main": "src/backup.ts",
+  "scripts": {
+    "backup": "tsx src/backup.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gurukul/contracts": "*",
+    "@gurukul/domain": "*",
+    "tsx": "^4.19.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

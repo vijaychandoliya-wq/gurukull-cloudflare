@@ -1,0 +1,15 @@
+{
+  "name": "@gurukul/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Gurukul Mobile SQLite Sync & Edge API Client Contracts",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@gurukul/domain": "*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,108 @@
+name = "gurukul-worker-api"
+main = "src/index.ts"
+compatibility_date = "2024-10-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+routes = [
+  { pattern = "rajesh.gurukull.in", custom_domain = true, zone_id = "38fe925b3775bec78580aabf2b9e912e" },
+  { pattern = "mggs.gurukull.in", custom_domain = true, zone_id = "38fe925b3775bec78580aabf2b9e912e" },
+  { pattern = "app.gurukull.in/*", zone_name = "gurukull.in" },
+  { pattern = "api.gurukull.in/*", zone_name = "gurukull.in" }
+]
+
+account_id = "e640cac6d5f89a87e7c952f4b3669af0"
+
+[vars]
+APP_RELEASE = "2026-10-19-roles-real-check-1"
+ENVIRONMENT = "validation"
+AUTH_CPU_VERIFIED = "false"
+ENROLLMENT_CPU_VERIFIED = "false"
+ADMIN_ACCESS_KEY_CPU_VERIFIED = "true"
+GENERATED_PASSWORD_AUTH_ENABLED = "true"
+WHATSAPP_DEFAULT_COUNTRY_CODE = "91"
+SCHOOL_ACTIVATION_VERIFIED_CODES = "108,117"
+TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,gurukul-worker-api.gurukull.workers.dev"
+ALLOWED_ORIGINS = "https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in,https://gurukul-worker-api.gurukull.workers.dev,https://rajesh.gurukull.in,https://mggs.gurukull.in"
+
+[build]
+command = "VITE_API_URL= npm --prefix ../../../gurukul-ant-web run build && node ../../tools/verify-portal-build.mjs"
+
+[assets]
+directory = "../../../gurukul-ant-web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api", "/api/*", "/v2", "/v2/*", "/platform", "/platform/*", "/health", "/parent/login"]
+
+# Production Environment Bindings
+[[d1_databases]]
+binding = "DB"
+database_name = "gurukul-d1-prod"
+database_id = "70b2a68a-d0c8-47b6-8837-c66eef4c19e0"
+migrations_dir = "../../migrations"
+
+[[kv_namespaces]]
+binding = "KV_SESSIONS"
+id = "9031e5a4b0bf4c18b69e8c1d713f8620"
+
+[[r2_buckets]]
+binding = "R2_MEDIA"
+bucket_name = "gurukul-prod-private"
+
+# Staging Environment
+[env.staging]
+name = "gurukul-worker-api-staging"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "gurukul-staging-db"
+database_id = "staging-d1-placeholder-id"
+migrations_dir = "../../migrations"
+
+[[env.staging.kv_namespaces]]
+binding = "KV_SESSIONS"
+id = "staging-kv-placeholder-id"
+
+[[env.staging.r2_buckets]]
+binding = "R2_MEDIA"
+bucket_name = "gurukul-staging-private"
+
+# Production Environment
+[env.production]
+name = "gurukul-worker-api-prod"
+routes = [
+  { pattern = "api.gurukull.in/*", zone_name = "gurukull.in" },
+  { pattern = "*.gurukull.in/api/*", zone_name = "gurukull.in" },
+  { pattern = "app.gurukull.in/*", zone_name = "gurukull.in" }
+]
+
+[env.production.vars]
+APP_RELEASE = "2026-10-19-roles-real-check-1"
+ENVIRONMENT = "production"
+AUTH_CPU_VERIFIED = "false"
+ENROLLMENT_CPU_VERIFIED = "false"
+ADMIN_ACCESS_KEY_CPU_VERIFIED = "false"
+GENERATED_PASSWORD_AUTH_ENABLED = "true"
+WHATSAPP_DEFAULT_COUNTRY_CODE = "91"
+SCHOOL_ACTIVATION_VERIFIED_CODES = "108,117"
+TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,gurukul-worker-api.gurukull.workers.dev"
+ALLOWED_ORIGINS = "https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in,https://gurukul-worker-api.gurukull.workers.dev,https://rajesh.gurukull.in,https://mggs.gurukull.in"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+AUTH_CPU_VERIFIED = "false"
+ENROLLMENT_CPU_VERIFIED = "false"
+ADMIN_ACCESS_KEY_CPU_VERIFIED = "false"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "gurukul-d1-prod"
+database_id = "70b2a68a-d0c8-47b6-8837-c66eef4c19e0"
+migrations_dir = "../../migrations"
+
+[[env.production.kv_namespaces]]
+binding = "KV_SESSIONS"
+id = "9031e5a4b0bf4c18b69e8c1d713f8620"
+
+[[env.production.r2_buckets]]
+binding = "R2_MEDIA"
+bucket_name = "gurukul-prod-private"

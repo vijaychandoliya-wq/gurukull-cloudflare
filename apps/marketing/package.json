@@ -1,0 +1,9 @@
+{
+  "name": "@gurukul/app-marketing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gurukul Next.js Public Marketing Showcase (Cloudflare Pages Target)",
+  "scripts": {
+    "build": "cd ../../../gurukul-nextjs && npm run build"
+  }
+}

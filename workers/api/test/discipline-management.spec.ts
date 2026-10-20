@@ -1,0 +1,8 @@
+import {describe,it,expect} from 'vitest';
+import {conductInput,localSchoolMinute} from '../src/discipline-management.js';
+describe('Conduct scalar boundaries without persisted business fixtures',()=>{
+ const scalar={studentId:'nonpersisting-student',sectionId:'nonpersisting-section',teacherId:'nonpersisting-teacher',type:'discipline',incidentDate:'2026-10-12',incidentTime:'09:15',incidentDetail:'Scalar validation only',actionTaken:false,visibleToParents:false};
+ it('requires explicit privacy and action choices, retaining false',()=>{const v=conductInput.safeParse(scalar);expect(v.success).toBe(true);if(v.success)expect(v.data.actionTaken).toBe(false);expect(conductInput.safeParse({...scalar,visibleToParents:undefined}).success).toBe(false);expect(conductInput.safeParse({...scalar,actionTaken:'false'}).success).toBe(false);expect(conductInput.safeParse({...scalar,notifyParents:true}).success).toBe(false);});
+ it('rejects malformed dates, times and empty incident text',()=>{for(const v of [{incidentDate:'2026-02-30'},{incidentTime:'24:00'},{incidentTime:'09:60'},{incidentDetail:'  '},{incidentDetail:'x'.repeat(3001)},{response:'x'.repeat(256)}])expect(conductInput.safeParse({...scalar,...v}).success).toBe(false);});
+ it('uses the supplied school timezone including date transitions and midnight',()=>{expect(localSchoolMinute('2026-10-11T20:30:00Z','Asia/Kolkata')).toBe('2026-10-12 02:00');expect(localSchoolMinute('2026-10-11T18:30:00Z','Asia/Kolkata')).toBe('2026-10-12 00:00');expect(localSchoolMinute('2026-10-12T01:00:00Z','America/New_York')).toBe('2026-10-11 21:00');});
+});

@@ -1,0 +1,6 @@
+name = "gurukul-auth-cpu-check"
+main = "probe.ts"
+account_id = "e640cac6d5f89a87e7c952f4b3669af0"
+compatibility_date = "2026-10-09"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true

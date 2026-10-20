@@ -1,0 +1,9 @@
+{
+  "name": "@gurukul/app-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gurukul school portal served through API Worker Static Assets",
+  "scripts": {
+    "build": "cd ../../../gurukul-ant-web && VITE_API_URL= npm run build && node ../cloudflare/tools/verify-portal-build.mjs"
+  }
+}

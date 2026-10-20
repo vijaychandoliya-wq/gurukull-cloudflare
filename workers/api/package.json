@@ -1,0 +1,25 @@
+{
+  "name": "@gurukul/worker-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Gurukul Multi-Tenant Edge API on Cloudflare Workers",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gurukul/contracts": "*",
+    "@gurukul/domain": "*",
+    "bcryptjs": "3.0.3",
+    "hono": "^4.6.8",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261008.1",
+    "typescript": "^5.6.3",
+    "wrangler": "4.148.0"
+  }
+}
