@@ -3,6 +3,9 @@ import type {Hono} from 'hono';
 import {db,readBody,requireAuth,requireRole,type AppEnv,type ApiContext} from './context.js';
 import {parse,requiredText,nullableText,dateInput,command,managementReady,guard,cleanupGuards,audit} from './management-common.js';
 import {fail} from './security.js';
+import {generatedPasswordDigest} from './security.js';
+import {generateTemporaryPassword} from './member-access.js';
+import {sendCredentialsEmail} from './email.js';
 const nullableDate=z.preprocess(v=>v===''||v===undefined?null:v,dateInput.nullable());
 const email=z.preprocess(v=>v===''||v===undefined?null:typeof v==='string'?v.trim().toLowerCase():v,z.string().email().max(254).nullable());
 const phone=z.preprocess(v=>v===''||v===undefined?null:v,z.string().regex(/^\+?[0-9]{7,15}$/).nullable());
@@ -30,6 +33,9 @@ async function savePerson(c:ApiContext,kind:PersonKind){
  const u=requireRole(c,'admin'),body=await readBody(c);
  const input=kind==='students'?parse(studentInput,body):kind==='teachers'?parse(teacherInput,body):parse(staffInput,body);
  const {yearId}=await managementReady(c),id=c.req.param('id')||crypto.randomUUID(),editing=!!c.req.param('id'),role=kind==='students'?'student':kind==='teachers'?'teacher':'staff';
+ const autoEmail=!!input.email&&!editing&&c.env.EMAIL&&c.env.GENERATED_PASSWORD_AUTH_ENABLED==='true'&&!!c.env.ADMIN_ACCESS_KEY_SECRET;
+ const generatedPassword=autoEmail?generateTemporaryPassword():null;
+ const generatedHash=generatedPassword?await generatedPasswordDigest(generatedPassword,c.env.ADMIN_ACCESS_KEY_SECRET!,u.school_id,id):'!';
  const nowDate=new Date().toISOString().slice(0,10);
  if(input.dateOfBirth&&input.dateOfBirth>nowDate)fail(422,'INVALID_BIRTH_DATE');
  if(('enrollmentDate' in input?input.enrollmentDate:input.joiningDate)>nowDate)fail(422,'INVALID_JOINING_DATE');
@@ -44,7 +50,7 @@ async function savePerson(c:ApiContext,kind:PersonKind){
   if(editing){statements.push(guard(c,'EXISTS(SELECT 1 FROM users WHERE id=? AND school_id=? AND user_type=? AND version=?)',[id,u.school_id,role,input.version],guardId+'-version'));
    statements.push(db(c).prepare('UPDATE users SET full_name=?,email=?,mobile=?,version=version+1,updated_at=unixepoch() WHERE id=? AND school_id=? AND user_type=? AND version=?').bind(input.name,input.email,kind==='students'?null:input.mobile,id,u.school_id,role,input.version));
   }else{
-   statements.push(db(c).prepare(`INSERT INTO users(id,school_id,email,mobile,password_hash,hash_algorithm,full_name,user_type,status,created_at,updated_at) VALUES(?,?,?,?,'!','bcrypt',?,?,'active',unixepoch(),unixepoch())`).bind(id,u.school_id,input.email,kind==='students'?null:input.mobile,input.name,role));
+   statements.push(db(c).prepare('INSERT INTO users(id,school_id,email,mobile,password_hash,hash_algorithm,full_name,user_type,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,? ,\'active\',unixepoch(),unixepoch())').bind(id,u.school_id,input.email,kind==='students'?null:input.mobile,generatedHash,generatedPassword?'hmac-sha256-generated':'bcrypt',input.name,role));
    statements.push(db(c).prepare('INSERT INTO user_roles VALUES(?,?,?)').bind(u.school_id,id,role));
   }
   statements.push(db(c).prepare(`INSERT INTO user_profiles(id,school_id,user_id,gender,dob,blood_group,address,city,pincode,first_name,last_name,alternate_mobile,aadhaar_number,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,unixepoch(),unixepoch()) ON CONFLICT(user_id) DO UPDATE SET gender=excluded.gender,dob=excluded.dob,blood_group=excluded.blood_group,address=excluded.address,city=excluded.city,pincode=excluded.pincode,first_name=excluded.first_name,last_name=excluded.last_name,alternate_mobile=excluded.alternate_mobile,aadhaar_number=excluded.aadhaar_number,updated_at=excluded.updated_at`).bind(crypto.randomUUID(),u.school_id,id,input.gender,input.dateOfBirth,input.bloodGroup,input.address,input.city,input.pincode,input.firstName,input.lastName,input.alternateMobile,input.aadhaarNumber));
@@ -55,7 +61,10 @@ async function savePerson(c:ApiContext,kind:PersonKind){
   }else{statements.push(db(c).prepare('INSERT INTO staff_profiles VALUES(?,?,?,?,?) ON CONFLICT(school_id,user_id) DO UPDATE SET employee_code=excluded.employee_code,designation=excluded.designation,joining_date=excluded.joining_date').bind(u.school_id,id,input.employeeId,input.designation,input.joiningDate));}
   statements.push(audit(c,editing?'update':'create',role,id),cleanupGuards(c,guardId));if(editing)statements.push(cleanupGuards(c,guardId+'-version'),cleanupGuards(c,guardId+'-enrollment'));
   return statements;
- },{message:editing?'Changes saved.':'Person added. Login is disabled until a secure individual credential is issued.',data:{id,version:editing?input.version!+1:1}});
+ },{message:editing?'Changes saved.':autoEmail?'Person added. Login details will be emailed shortly.':'Person added. Issue an individual credential from Roles and account access.',data:{id,version:editing?input.version!+1:1,emailDelivery:autoEmail?'queued':'not_sent'}});
+ if(generatedPassword&&input.email){
+  c.executionCtx.waitUntil(sendCredentialsEmail(c.env,{recipient:input.email,schoolName:c.get('school').name,schoolCode:c.get('school').code,fullName:input.name,role,identifier:input.email,password:generatedPassword,loginUrl:`https://${c.get('school').slug}.gurukull.in/login`}).catch(()=>undefined));
+ }
  return c.json(response,editing?200:201);
 }
 export function registerPeopleManagement(app:Hono<AppEnv>){
