@@ -76,7 +76,7 @@ bucket_name = "gurukul-staging-private"
 
 # Production Environment
 [env.production]
-name = "gurukul-worker-api-prod"
+name = "gurukul-worker-api"
 routes = [
   { pattern = "api.gurukull.in/*", zone_name = "gurukull.in" },
   { pattern = "*.gurukull.in/api/*", zone_name = "gurukull.in" },
