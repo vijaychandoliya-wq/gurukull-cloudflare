@@ -3,7 +3,7 @@ import { CreateSchoolInputSchema } from '@gurukul/domain';
 import { computePayloadHash } from '@gurukul/contracts';
 import { db, readBody, requireAuth, requireRole, type ApiContext, type AppEnv } from './context.js';
 import { accessKeyDigest, validAccessKey } from './admin-access.js';
-import { encode, fail, signJwt, digest } from './security.js';
+import { encode, fail, signJwt, digest, verifyGeneratedPassword } from './security.js';
 import { sendCredentialsEmail } from './email.js';
 
 function operator(c: ApiContext) {
@@ -18,18 +18,26 @@ export async function platformLogin(c: ApiContext) {
   const body = await readBody(c);
   const identifier = String(body.email || body.mobile || '').trim();
   const credential = typeof body.password === 'string' ? body.password : '';
-  if (!identifier || identifier.length > 254 || !validAccessKey(credential)) fail(422, 'INVALID_PLATFORM_CREDENTIAL');
-  if (c.env.ADMIN_ACCESS_KEY_CPU_VERIFIED !== 'true') fail(503, 'ADMIN_ACCESS_CPU_VERIFICATION_REQUIRED');
+  if (!identifier || identifier.length > 254 || !credential || credential.length > 256) fail(422, 'INVALID_PLATFORM_CREDENTIAL');
+  const accessKeyLogin = validAccessKey(credential);
+  if (accessKeyLogin && c.env.ADMIN_ACCESS_KEY_CPU_VERIFIED !== 'true') fail(503, 'ADMIN_ACCESS_CPU_VERIFICATION_REQUIRED');
   if (!c.env.ADMIN_ACCESS_KEY_SECRET || !c.env.JWT_SECRET) fail(503, 'PLATFORM_AUTH_NOT_CONFIGURED');
-  const user = await db(c).prepare(`SELECT u.*,s.code AS school_code,s.name AS school_name,a.id AS credential_id,a.credential_digest
+  const user = await db(c).prepare(`SELECT u.*,s.code AS school_code,s.name AS school_name,a.id AS credential_id,a.credential_digest,ppc.password_hash AS platform_password_hash,ppc.hash_algorithm AS platform_password_algorithm
     FROM users u JOIN schools s ON s.id=u.school_id JOIN platform_operators po ON po.user_id=u.id AND po.revoked_at IS NULL
-    JOIN admin_access_credentials a ON a.school_id=u.school_id AND a.user_id=u.id AND a.revoked_at IS NULL AND a.expires_at>unixepoch()
+    LEFT JOIN admin_access_credentials a ON a.school_id=u.school_id AND a.user_id=u.id AND a.revoked_at IS NULL AND a.expires_at>unixepoch()
+    LEFT JOIN platform_password_credentials ppc ON ppc.school_id=u.school_id AND ppc.user_id=u.id AND ppc.revoked_at IS NULL
     WHERE u.status='active' AND (lower(u.email)=lower(?) OR u.mobile=?) LIMIT 1`).bind(identifier, identifier).first<any>();
-  if (!user || !await (async () => {
-    try { return await (await import('./admin-access.js')).verifyAccessKey(credential, user.credential_digest, c.env.ADMIN_ACCESS_KEY_SECRET!, user.school_id, user.id); } catch { return false; }
-  })()) fail(401, 'CREDENTIAL_REJECTED');
+  let verified = false;
+  if (user && accessKeyLogin && user.credential_id && user.credential_digest) {
+    try { verified = await (await import('./admin-access.js')).verifyAccessKey(credential, user.credential_digest, c.env.ADMIN_ACCESS_KEY_SECRET!, user.school_id, user.id); } catch { verified = false; }
+  } else if (user && !accessKeyLogin && c.env.GENERATED_PASSWORD_AUTH_ENABLED === 'true' && user.platform_password_algorithm === 'hmac-sha256-generated') {
+    const passwordSecret = c.env.PLATFORM_PASSWORD_SECRET || c.env.ADMIN_ACCESS_KEY_SECRET;
+    if (passwordSecret) verified = await verifyGeneratedPassword(credential, user.platform_password_hash, passwordSecret, user.school_id, user.id);
+  }
+  if (!user || !verified) fail(401, 'CREDENTIAL_REJECTED');
   const now = Math.floor(Date.now() / 1000), sid = crypto.randomUUID();
-  const token = await signJwt({sub:user.id,sid,schoolId:user.school_id,schoolCode:user.school_code,userType:user.user_type,fullName:user.full_name,iat:now,exp:now+7200,iss:'gurukull-edge',aud:'gurukull-clients',authMethod:'admin_access_key',credentialId:user.credential_id}, c.env.JWT_SECRET);
+  const claims = {sub:user.id,sid,schoolId:user.school_id,schoolCode:user.school_code,userType:user.user_type,fullName:user.full_name,iat:now,exp:now+7200,iss:'gurukull-edge' as const,aud:'gurukull-clients' as const,authMethod:accessKeyLogin?'admin_access_key' as const:'password' as const,...(accessKeyLogin?{credentialId:user.credential_id}: {})};
+  const token = await signJwt(claims, c.env.JWT_SECRET);
   const saved = await db(c).prepare(`INSERT INTO sessions(id,school_id,user_id,token_digest,platform,expires_at,created_at) VALUES(?,?,?,?, 'web', ?, ?)`).bind(sid,user.school_id,user.id,await digest(token),now+7200,now).run();
   if (!saved.success) fail(503, 'SESSION_WRITE_FAILED');
   return c.json({status:'success',token,schoolCode:user.school_code,user:{id:user.id,name:user.full_name,email:user.email,roles:['superadmin'],userType:user.user_type},platform:true});

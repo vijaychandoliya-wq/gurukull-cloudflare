@@ -7,7 +7,7 @@ export type Role = typeof roles[number];
 export interface Claims {
   sub: string; sid: string; schoolId: string; schoolCode: string; userType: Role;
   fullName: string; iat: number; exp: number; iss: 'gurukull-edge'; aud: 'gurukull-clients';
-  purpose?: 'school_setup'; authMethod?: 'admin_access_key' | 'member_access_key'; credentialId?: string;
+  purpose?: 'school_setup'; authMethod?: 'admin_access_key' | 'member_access_key' | 'password'; credentialId?: string;
 }
 export function fail(status: 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 429 | 500 | 501 | 502 | 503, error: string, message = error): never {
   throw new HTTPException(status, { res: Response.json({ error, message }, { status }) });
@@ -47,7 +47,7 @@ export async function verifyJwt(token: string, secret: string): Promise<Claims |
     if (!Number.isSafeInteger(p.exp) || !Number.isSafeInteger(p.iat) || p.exp <= now || p.iat > now+30 || p.exp <= p.iat || p.exp-p.iat > 86400) return null;
     if (p.iss !== 'gurukull-edge' || p.aud !== 'gurukull-clients') return null;
     if(p.purpose!==undefined&&p.purpose!=='school_setup')return null;
-    if(p.authMethod!==undefined&&(!['admin_access_key','member_access_key'].includes(p.authMethod)||typeof p.credentialId!=='string'||!p.credentialId))return null;
+    if(p.authMethod!==undefined&&p.authMethod!=='password'&&(!['admin_access_key','member_access_key'].includes(p.authMethod)||typeof p.credentialId!=='string'||!p.credentialId))return null;
     return p;
   } catch { return null; }
 }

@@ -8,11 +8,11 @@ describe('platform onboarding boundaries', () => {
     expect((await response.json() as { error: string }).error).toBe('UNAUTHORIZED');
   });
 
-  it('rejects a platform login before touching the database when the access-key shape is invalid', async () => {
+  it('rejects a platform login when the identifier or password is missing', async () => {
     const response = await app.request('https://admin.gurukull.in/platform/v1/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'platform@example.com', password: 'password' }),
+      body: JSON.stringify({ email: '', password: '' }),
     }, { ADMIN_ACCESS_KEY_CPU_VERIFIED: 'true' } as any);
     expect(response.status).toBe(422);
     expect((await response.json() as { error: string }).error).toBe('INVALID_PLATFORM_CREDENTIAL');
