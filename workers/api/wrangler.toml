@@ -80,7 +80,8 @@ name = "gurukul-worker-api"
 routes = [
   { pattern = "api.gurukull.in/*", zone_name = "gurukull.in" },
   { pattern = "*.gurukull.in/api/*", zone_name = "gurukull.in" },
-  { pattern = "app.gurukull.in/*", zone_name = "gurukull.in" }
+  { pattern = "app.gurukull.in/*", zone_name = "gurukull.in" },
+  { pattern = "smvdic.gurukull.in/*", zone_name = "gurukull.in" }
 ]
 
 [[env.production.send_email]]
