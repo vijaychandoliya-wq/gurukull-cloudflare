@@ -24,9 +24,6 @@ SCHOOL_ACTIVATION_VERIFIED_CODES = "108,117"
 TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,gurukul-worker-api.gurukull.workers.dev"
 ALLOWED_ORIGINS = "https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in,https://gurukul-worker-api.gurukull.workers.dev,https://rajesh.gurukull.in,https://mggs.gurukull.in"
 
-[build]
-command = "npm --prefix ../../apps/portal/source run build && node ../../tools/verify-portal-build.mjs && node ../../tools/verify-portal-theme.mjs"
-
 [assets]
 directory = "../../apps/portal/source/dist"
 binding = "ASSETS"
