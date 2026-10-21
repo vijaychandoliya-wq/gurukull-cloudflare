@@ -14,7 +14,7 @@ routes = [
 account_id = "e640cac6d5f89a87e7c952f4b3669af0"
 
 [vars]
-APP_RELEASE = "2026-10-19-roles-real-check-1"
+APP_RELEASE = "2026-10-21-platform-onboarding-1"
 ENVIRONMENT = "validation"
 AUTH_CPU_VERIFIED = "false"
 ENROLLMENT_CPU_VERIFIED = "false"
@@ -91,7 +91,7 @@ name = "EMAIL"
 remote = true
 
 [env.production.vars]
-APP_RELEASE = "2026-10-19-roles-real-check-1"
+APP_RELEASE = "2026-10-21-platform-onboarding-1"
 ENVIRONMENT = "production"
 AUTH_CPU_VERIFIED = "false"
 ENROLLMENT_CPU_VERIFIED = "false"
