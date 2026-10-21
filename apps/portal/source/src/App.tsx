@@ -37,6 +37,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { FeeLedgerPage } from './pages/FeeLedgerPage';
 import { IdCardPage } from './pages/IdCardPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { PlatformPortal } from './pages/PlatformPortal';
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -124,11 +125,7 @@ const ThemedApp: React.FC = () => {
   return (
   <ConfigProvider theme={antdCustomTheme(resolvedTheme)}>
     <AntApp>
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
+      {window.location.hostname === 'admin.gurukull.in' ? <PlatformPortal /> : <BrowserRouter><AuthProvider><AppRoutes /></AuthProvider></BrowserRouter>}
     </AntApp>
   </ConfigProvider>
   );

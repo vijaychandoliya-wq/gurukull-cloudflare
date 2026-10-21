@@ -25,8 +25,7 @@ import {registerFeeManagement} from './fee-management.js';
 import {registerIdCardManagement} from './idcard-management.js';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { DeviceRegisterRequestSchema, CreateSchoolInputSchema } from '@gurukul/domain';
-import { computePayloadHash } from '@gurukul/contracts';
+import { DeviceRegisterRequestSchema } from '@gurukul/domain';
 import { db, requireAuth, requireRole, schoolByCode, readBody, child, type AppEnv, type ApiContext } from './context.js';
 import { login, logout } from './auth.js';
 import { fail, money } from './security.js';
@@ -35,6 +34,7 @@ import { registerStorage } from './storage/routes.js';
 import { registerAttendance } from './attendance.js';
 import { registerEnrollment } from './enrollment.js';
 import { registerAdmin } from './admin.js';
+import { registerPlatform } from './platform.js';
 export { signJwt, verifyJwt } from './security.js';
 export type { Env } from './context.js';
 
@@ -78,28 +78,7 @@ app.on('GET',['/api/teacher/school/details','/api/v2/school/details','/v2/school
   const s=c.get('school');const config=await db(c).prepare('SELECT * FROM school_configuration WHERE school_id=?').bind(s.id).first();
   return c.json({status:'success',data:{id:s.id,name:s.name,code:s.code,status:s.status,configuration:config}});
 });
-app.post('/platform/v1/schools',requireAuth,async (c:ApiContext):Promise<Response>=>{
-  const user=requireRole(c,'superadmin');
-  if(!await db(c).prepare('SELECT 1 FROM platform_operators WHERE user_id=? AND revoked_at IS NULL').bind(user.id).first())fail(403,'PLATFORM_PERMISSION_REQUIRED');
-  const parsed=CreateSchoolInputSchema.safeParse(await readBody(c));if(!parsed.success)fail(422,'INVALID_SCHOOL');
-  const input=parsed.data;
-  if(['app','api','admin','www','assets','mail','status','staging','dev','support'].includes(input.slug))fail(422,'RESERVED_SLUG');
-  const idem=c.req.header('Idempotency-Key');if(!idem||idem.length>128)fail(422,'IDEMPOTENCY_KEY_REQUIRED');
-  const hash=await computePayloadHash(input);
-  const prior=await db(c).prepare('SELECT payload_hash,school_id FROM provisioning_operations WHERE actor_id=? AND idempotency_key=?').bind(user.id,idem).first<{payload_hash:string;school_id:string}>();
-  if(prior){if(prior.payload_hash!==hash)fail(409,'IDEMPOTENCY_CONFLICT');return c.json({status:'reserved',data:await db(c).prepare('SELECT id,code,slug,name,status FROM schools WHERE id=?').bind(prior.school_id).first()});}
-  const id=crypto.randomUUID(),now=Math.floor(Date.now()/1000);
-  await db(c).batch([
-    db(c).prepare(`INSERT INTO schools(id,code,slug,name,status,timezone,currency,created_at,updated_at) VALUES(?,?,?,?,'configuration_needed',?,?,?,?)`).bind(id,input.code,input.slug,input.name,input.timezone,input.currency,now,now),
-    db(c).prepare(`INSERT INTO school_configuration(school_id,updated_at) VALUES(?,?)`).bind(id,now),
-    db(c).prepare(`INSERT INTO provisioning_operations(id,actor_id,idempotency_key,payload_hash,school_id,created_at) VALUES(?,?,?,?,?,?)`).bind(crypto.randomUUID(),user.id,idem,hash,id,now),
-  ]);
-  return c.json({status:'reserved',data:{id,code:input.code,name:input.name,slug:input.slug,status:'configuration_needed'}},201);
-});
-app.get('/platform/v1/schools/:schoolId',requireAuth,async c=>{
-  const u=requireRole(c,'superadmin');if(!await db(c).prepare('SELECT 1 FROM platform_operators WHERE user_id=? AND revoked_at IS NULL').bind(u.id).first())fail(403,'PLATFORM_PERMISSION_REQUIRED');
-  const school=await db(c).prepare('SELECT id,code,slug,name,status FROM schools WHERE id=?').bind(c.req.param('schoolId')).first();if(!school)fail(404,'SCHOOL_NOT_FOUND');return c.json({data:school});
-});
+registerPlatform(app);
 app.post('/api/v3/devices/register',requireAuth,async c=>{
   const u=c.get('user'),parsed=DeviceRegisterRequestSchema.safeParse(await readBody(c));if(!parsed.success)fail(422,'INVALID_DEVICE');
   const d=parsed.data,now=Math.floor(Date.now()/1000);

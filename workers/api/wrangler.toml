@@ -7,7 +7,8 @@ routes = [
   { pattern = "rajesh.gurukull.in", custom_domain = true, zone_id = "38fe925b3775bec78580aabf2b9e912e" },
   { pattern = "mggs.gurukull.in", custom_domain = true, zone_id = "38fe925b3775bec78580aabf2b9e912e" },
   { pattern = "app.gurukull.in/*", zone_name = "gurukull.in" },
-  { pattern = "api.gurukull.in/*", zone_name = "gurukull.in" }
+  { pattern = "api.gurukull.in/*", zone_name = "gurukull.in" },
+  { pattern = "admin.gurukull.in/*", zone_name = "gurukull.in" }
 ]
 
 account_id = "e640cac6d5f89a87e7c952f4b3669af0"
@@ -22,8 +23,8 @@ GENERATED_PASSWORD_AUTH_ENABLED = "true"
 WHATSAPP_DEFAULT_COUNTRY_CODE = "91"
 EMAIL_FROM = "welcome@gurukull.in"
 SCHOOL_ACTIVATION_VERIFIED_CODES = "108,117"
-TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,gurukul-worker-api.gurukull.workers.dev,smvdic.gurukull.in"
-ALLOWED_ORIGINS = "https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in,https://gurukul-worker-api.gurukull.workers.dev,https://rajesh.gurukull.in,https://mggs.gurukull.in,https://smvdic.gurukull.in"
+TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,admin.gurukull.in,gurukul-worker-api.gurukull.workers.dev,smvdic.gurukull.in"
+ALLOWED_ORIGINS = "https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in,https://api.gurukull.in,https://admin.gurukull.in,https://gurukul-worker-api.gurukull.workers.dev,https://rajesh.gurukull.in,https://mggs.gurukull.in,https://smvdic.gurukull.in"
 
 [assets]
 directory = "../../apps/portal/source/dist"
@@ -81,7 +82,8 @@ routes = [
   { pattern = "api.gurukull.in/*", zone_name = "gurukull.in" },
   { pattern = "*.gurukull.in/api/*", zone_name = "gurukull.in" },
   { pattern = "app.gurukull.in/*", zone_name = "gurukull.in" },
-  { pattern = "smvdic.gurukull.in/*", zone_name = "gurukull.in" }
+  { pattern = "smvdic.gurukull.in/*", zone_name = "gurukull.in" },
+  { pattern = "admin.gurukull.in/*", zone_name = "gurukull.in" }
 ]
 
 [[env.production.send_email]]
@@ -98,8 +100,8 @@ GENERATED_PASSWORD_AUTH_ENABLED = "true"
 WHATSAPP_DEFAULT_COUNTRY_CODE = "91"
 EMAIL_FROM = "welcome@gurukull.in"
 SCHOOL_ACTIVATION_VERIFIED_CODES = "108,117"
-TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,gurukul-worker-api.gurukull.workers.dev,smvdic.gurukull.in"
-ALLOWED_ORIGINS = "https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in,https://gurukul-worker-api.gurukull.workers.dev,https://rajesh.gurukull.in,https://mggs.gurukull.in,https://smvdic.gurukull.in"
+TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,admin.gurukull.in,gurukul-worker-api.gurukull.workers.dev,smvdic.gurukull.in"
+ALLOWED_ORIGINS = "https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in,https://api.gurukull.in,https://admin.gurukull.in,https://gurukul-worker-api.gurukull.workers.dev,https://rajesh.gurukull.in,https://mggs.gurukull.in,https://smvdic.gurukull.in"
 
 [env.staging.vars]
 ENVIRONMENT = "staging"

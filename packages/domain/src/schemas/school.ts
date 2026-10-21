@@ -51,6 +51,7 @@ export const CreateSchoolInputSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
   timezone: z.string().refine(v=>{try{new Intl.DateTimeFormat('en',{timeZone:v});return true;}catch{return false;}},'Invalid timezone'),
   currency: z.literal('INR'),
+  address: z.string().trim().max(500).optional(),
 });
 
 export type CreateSchoolInput = z.infer<typeof CreateSchoolInputSchema>;
