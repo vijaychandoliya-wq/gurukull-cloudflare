@@ -30,6 +30,12 @@ binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = ["/api", "/api/*", "/v2", "/v2/*", "/platform", "/platform/*", "/health", "/parent/login"]
 
+# Cloudflare Email Sending binding. The remote binding is available in local
+# configuration and every named environment unless overridden below.
+[[send_email]]
+name = "EMAIL"
+remote = true
+
 # Production Environment Bindings
 [[d1_databases]]
 binding = "DB"
@@ -48,6 +54,10 @@ bucket_name = "gurukul-prod-private"
 # Staging Environment
 [env.staging]
 name = "gurukul-worker-api-staging"
+
+[[env.staging.send_email]]
+name = "EMAIL"
+remote = true
 
 [[env.staging.d1_databases]]
 binding = "DB"
@@ -71,6 +81,10 @@ routes = [
   { pattern = "*.gurukull.in/api/*", zone_name = "gurukull.in" },
   { pattern = "app.gurukull.in/*", zone_name = "gurukull.in" }
 ]
+
+[[env.production.send_email]]
+name = "EMAIL"
+remote = true
 
 [env.production.vars]
 APP_RELEASE = "2026-10-19-roles-real-check-1"

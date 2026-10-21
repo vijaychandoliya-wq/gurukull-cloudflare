@@ -4,7 +4,7 @@ import { setupRequestAllowed } from './admin-access.js';
 
 export interface Env {
   APP_RELEASE?: string;
-  DB: D1Database; R2_MEDIA: R2Bucket; KV_SESSIONS?: KVNamespace;
+  DB: D1Database; R2_MEDIA: R2Bucket; KV_SESSIONS?: KVNamespace; EMAIL?: SendEmail;
   JWT_SECRET?: string; ENVIRONMENT?: string; AUTH_CPU_VERIFIED?: string; ENROLLMENT_CPU_VERIFIED?: string;
   ALLOWED_ORIGINS?: string; TRUSTED_SHARED_HOSTS?: string;
   SCHOOL_ACTIVATION_VERIFIED?: string;
