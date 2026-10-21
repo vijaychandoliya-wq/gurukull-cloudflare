@@ -56,11 +56,15 @@
 .gk-sider .ant-menu { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; padding: 8px 0 18px; }
 .gk-brand { height: 76px; padding: 0 18px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #f0f2f5; }
 .gk-brand-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.4; }
-.gk-header { position: sticky; top: 0; z-index: 9; height: 76px; padding: 0 24px; border-bottom: 1px solid #eaecf0; }
-.gk-header-inner { height: 100%; }
-.gk-global-search { width: min(360px, 34vw); }
+.gk-header { position: sticky; top: 0; z-index: 20; height: 76px; padding: 0 24px; border-bottom: 1px solid #eaecf0; overflow: visible; }
+.gk-header-inner { height: 100%; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.gk-header-inner > .ant-space { min-width: 0; }
+.gk-header-inner > .ant-space:first-child { flex: 1 1 auto; }
+.gk-header-inner > .ant-space:first-child > .ant-space-item:last-child { min-width: 0; flex: 1 1 auto; }
+.gk-header-inner > .ant-space:last-child { flex: 0 1 auto; justify-content: flex-end; }
+.gk-global-search { width: min(520px, 36vw); min-width: 220px; }
 .gk-profile-button { height: auto; padding: 4px 8px; }
-.gk-profile-copy { display: inline-flex; flex-direction: column; text-align: left; line-height: 1.25; }
+.gk-profile-copy { display: inline-flex; max-width: 180px; flex-direction: column; text-align: left; line-height: 1.25; }
 .gk-content { padding: 24px; min-width: 0; }
 .gk-card-link-wrapper { display: block; color: inherit; text-decoration: none; }
 .gk-card-link-wrapper:hover { color: inherit; }
