@@ -32,6 +32,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import {humanize} from '../../ux/format';
 import { ThemeSwitcher } from '../ThemeSwitcher';
+import {LanguageSwitcher} from '../LanguageSwitcher';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -160,6 +161,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
           <Space size="middle">
             <ThemeSwitcher compact />
+            <LanguageSwitcher compact />
 
               <Button type="text" shape="circle" icon={<NotificationOutlined />} onClick={() => navigateSafely('/notices')} aria-label="Notifications" />
 

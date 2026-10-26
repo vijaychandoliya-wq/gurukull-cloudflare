@@ -13,6 +13,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { ThemeSwitcher } from '../components/ThemeSwitcher';
+import {LanguageSwitcher} from '../components/LanguageSwitcher';
+import {useLanguage} from '../i18n/LanguageProvider';
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -30,6 +32,7 @@ const benefits = [
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
+  const {t}=useLanguage();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,7 +82,7 @@ export const LoginPage: React.FC = () => {
       </section>
 
       <section className="gk-login-form-panel">
-        <div className="gk-login-appearance"><ThemeSwitcher /></div>
+        <div className="gk-login-appearance"><Space size={8}><LanguageSwitcher/><ThemeSwitcher /></Space></div>
         <div className="gk-login-mobile-brand">
           <Link to="/login" className="gk-login-wordmark gk-login-wordmark-mobile" aria-label="Gurukul home">
             <span className="gk-login-mark">GK</span>
@@ -89,21 +92,21 @@ export const LoginPage: React.FC = () => {
         <Card className="gk-login-card" bordered={false}>
           <Link to="/enroll" className="gk-login-back"><ArrowLeftOutlined /> Have an administrator invitation?</Link>
           <div className="gk-login-heading">
-            <Title level={2}>Welcome back</Title>
-            <Text type="secondary">Sign in once to continue to your role-based Gurukul portal.</Text>
+            <Title level={2}>{t('welcomeBack')}</Title>
+            <Text type="secondary">{t('signInSubtitle')}</Text>
           </div>
           {error && <Alert type="error" showIcon message={error} className="gk-login-alert" />}
           {new URLSearchParams(window.location.search).get('passwordChanged')==='1'&&<Alert type="success" showIcon message="Password changed. Sign in with your new password."/>}<Form<LoginValues> layout="vertical" onFinish={onFinish} requiredMark={false} className="gk-login-form">
-            <Form.Item name="schoolCode" label="School code" rules={[{ required: true, message: 'Enter your school code' }]}>
+            <Form.Item name="schoolCode" label={t('schoolCode')} rules={[{ required: true, message: 'Enter your school code' }]}>
               <Input size="large" prefix={<BankOutlined />} placeholder="e.g. 108" autoComplete="organization" autoCapitalize="characters" />
             </Form.Item>
-            <Form.Item name="identifier" label="Mobile number or email address" rules={[{ required: true, message: 'Enter your mobile number or email address' }]}>
+            <Form.Item name="identifier" label={t('identifier')} rules={[{ required: true, message: 'Enter your mobile number or email address' }]}>
               <Input size="large" prefix={<MailOutlined />} placeholder="8056745614 or name@school.com" autoComplete="username" />
             </Form.Item>
-            <Form.Item name="password" label="Password or administrator access key" rules={[{ required: true, message: 'Enter your password or access key' }]}>
+            <Form.Item name="password" label={t('password')} rules={[{ required: true, message: 'Enter your password or access key' }]}>
               <Input.Password size="large" prefix={<LockOutlined />} placeholder="Enter your password or access key" autoComplete="current-password" />
             </Form.Item>
-            <Button type="primary" size="large" htmlType="submit" block loading={submitting} className="gk-login-submit">Sign in securely</Button>
+            <Button type="primary" size="large" htmlType="submit" block loading={submitting} className="gk-login-submit">{t('signIn')}</Button>
           </Form>
           <Divider />
           <Flex justify="center" align="center" gap={8} className="gk-login-help">
