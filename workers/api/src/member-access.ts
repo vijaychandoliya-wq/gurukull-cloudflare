@@ -3,7 +3,7 @@ import type {Hono} from 'hono';
 import {z} from 'zod';
 import {db,readBody,requireAuth,requireRole,type AppEnv} from './context.js';
 import {decode,encode,fail,generatedPasswordDigest} from './security.js';
-import {audit,parse} from './management-common.js';
+import {audit,parse,guard,cleanupGuards} from './management-common.js';
 import {sendWhatsAppPassword} from './whatsapp.js';
 import {credentialEmailStatement, encryptCredentialEnvelope} from './email-delivery.js';
 export function validMemberKey(v:unknown):v is string{if(typeof v!=='string'||!/^gku1_[A-Za-z0-9_-]{43}$/.test(v))return false;try{const raw=decode(v.slice(5));return raw.length===32&&encode(raw)===v.slice(5);}catch{return false;}}
@@ -47,18 +47,25 @@ export function registerMemberAccess(app:Hono<AppEnv>){
   if(user.version!==input.version)fail(409,'RECORD_CHANGED','Reload this account before generating a password.');
   if(input.action==='generate_and_send'&&!user.mobile)fail(409,'MEMBER_CONTACT_REQUIRED','This teacher or parent has no mobile number.');
   const password=generateTemporaryPassword(),hash=await generatedPasswordDigest(password,c.env.ADMIN_ACCESS_KEY_SECRET,u.school_id,user.id),now=Math.floor(Date.now()/1000);
-  if(input.action==='generate_and_send')await sendWhatsAppPassword(c.env,{schoolName:c.get('school').name,schoolCode:c.get('school').code,mobile:user.mobile!,password,loginUrl:`https://${c.get('school').slug}.gurukull.in/login`});
   const emailEventId=input.action==='generate_and_email'?crypto.randomUUID():null;
   const encryptedEmailPayload=emailEventId?await encryptCredentialEnvelope(c.env,{eventId:emailEventId,aggregateId:user.id,schoolId:u.school_id,recipient:user.email!,schoolName:c.get('school').name,schoolCode:c.get('school').code,fullName:user.full_name,role:user.user_type,identifier:user.email!,password,loginUrl:`https://${c.get('school').slug}.gurukull.in/login`}):null;
+  const guardId=crypto.randomUUID();
   const writes=[
+   guard(c,"EXISTS(SELECT 1 FROM users WHERE school_id=? AND id=? AND version=? AND status='active' AND user_type IN ('teacher','staff','parent','student'))",[u.school_id,target,input.version],guardId),
    db(c).prepare("UPDATE users SET generated_password_hash=?,version=version+1,updated_at=? WHERE id=? AND school_id=? AND user_type IN ('teacher','staff','parent','student') AND status='active' AND version=?").bind(hash,now,target,u.school_id,input.version),
    db(c).prepare('UPDATE user_access_credentials SET revoked_at=? WHERE school_id=? AND user_id=? AND revoked_at IS NULL').bind(now,u.school_id,target),
    db(c).prepare('UPDATE sessions SET revoked_at=? WHERE school_id=? AND user_id=? AND revoked_at IS NULL').bind(now,u.school_id,target),
+   db(c).prepare("UPDATE outbox SET status='dead_letter',last_error='Credential replaced by administrator',payload_json='{}',lease_id=NULL,lease_until=NULL WHERE school_id=? AND aggregate_id=? AND event_type='email_credentials' AND status IN ('pending','processing','failed')").bind(u.school_id,target),
    audit(c,input.action==='generate_and_send'?'generate_password_whatsapp':input.action==='generate_and_email'?'generate_password_email':'generate_password','user',target),
   ];
   if(emailEventId&&encryptedEmailPayload)writes.push(credentialEmailStatement(db(c),{eventId:emailEventId,aggregateId:user.id,schoolId:u.school_id,recipient:user.email!,schoolName:c.get('school').name,schoolCode:c.get('school').code,fullName:user.full_name,role:user.user_type,identifier:user.email!,password,loginUrl:`https://${c.get('school').slug}.gurukull.in/login`},encryptedEmailPayload));
-  const results=await db(c).batch(writes);
-  if(results.some(r=>!r.success))fail(503,'PASSWORD_WRITE_FAILED');
+  writes.push(cleanupGuards(c,guardId));
+  try{const results=await db(c).batch(writes);if(results.some(r=>!r.success))fail(503,'PASSWORD_WRITE_FAILED');}
+  catch(error){if(String(error).includes('CHECK constraint'))fail(409,'RECORD_CHANGED','This account changed while its password was being generated. Refresh before trying again.');throw error;}
+  if(input.action==='generate_and_send'){
+   try{await sendWhatsAppPassword(c.env,{schoolName:c.get('school').name,schoolCode:c.get('school').code,mobile:user.mobile!,password,loginUrl:`https://${c.get('school').slug}.gurukull.in/login`});}
+   catch{return c.json({error:'PASSWORD_SAVED_DELIVERY_NOT_CONFIRMED',message:'The password was changed and previous sessions were revoked, but WhatsApp delivery could not be confirmed. Refresh this account before taking another action.',data:{passwordSaved:true,version:input.version+1,delivery:'unknown'}},502);}
+  }
   const identifier=['teacher','parent'].includes(user.user_type)?user.mobile:user.email||user.mobile;
   return c.json({data:input.action==='generate'?{password,identifier,version:input.version+1}:input.action==='generate_and_email'?{identifier,version:input.version+1,email:{status:'queued'}}:{identifier,version:input.version+1,whatsapp:{status:'sent'}},message:input.action==='generate'?'Generated password shown once. Existing access keys and sessions were revoked.':input.action==='generate_and_email'?'Generated password and queued it for email delivery. Existing access keys and sessions were revoked.':'Generated password and sent it to the registered mobile by WhatsApp. Existing access keys and sessions were revoked.'});
  });
