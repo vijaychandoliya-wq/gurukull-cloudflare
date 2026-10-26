@@ -10,6 +10,15 @@ describe('operational and tenant release boundaries',()=>{
  it('does not expose schema or queue readiness to anonymous callers',async()=>{
   expect((await app.request('/api/platform/readiness')).status).toBe(401);
  });
+ it('rejects production school origins outside the environment allowlist',async()=>{
+  const env:any={ALLOWED_ORIGINS:'https://gurukul-worker-api-staging.gurukull.workers.dev'};
+  const r=await app.request('/health',{headers:{Origin:'https://smvdic.gurukull.in'}},env);
+  expect(r.status).toBe(403);
+  expect(r.headers.get('Access-Control-Allow-Origin')).toBeNull();
+  const allowed=await app.request('/health',{headers:{Origin:env.ALLOWED_ORIGINS}},env);
+  expect(allowed.status).toBe(200);
+  expect(allowed.headers.get('Access-Control-Allow-Origin')).toBe(env.ALLOWED_ORIGINS);
+ });
  it('school-branded SMVDIC host cannot select a different school',async()=>{
   const c:any={req:{url:'https://smvdic.gurukull.in/api/portal/login',header:()=>undefined},env:{TRUSTED_SHARED_HOSTS:'app.gurukull.in',DB:{prepare:()=>({bind:()=>({first:async()=>({id:'boundary-school',code:'051296'})})})}},set:()=>{}};
   await expect(resolveSchool(c,'108')).rejects.toMatchObject({status:400});

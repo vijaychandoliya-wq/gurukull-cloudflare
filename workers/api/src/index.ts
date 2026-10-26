@@ -49,8 +49,7 @@ app.use('*',async(c,next)=>{
   const origin=c.req.header('origin');
   const allowed=(c.env?.ALLOWED_ORIGINS||'https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in').split(',');
   if (origin) {
-    const tenantOrigin = origin === 'https://smvdic.gurukull.in';
-    if (!allowed.includes(origin) && !tenantOrigin) fail(403,'ORIGIN_FORBIDDEN');
+    if (!allowed.includes(origin)) fail(403,'ORIGIN_FORBIDDEN');
     c.header('Access-Control-Allow-Origin',origin);c.header('Vary','Origin');
     c.header('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE,OPTIONS');
     c.header('Access-Control-Allow-Headers','Content-Type,Authorization,x-school-code,x-request-id,x-file-name,x-access-scope,x-entity-id,x-entity-type,Idempotency-Key');
