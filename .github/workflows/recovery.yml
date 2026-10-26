@@ -1,0 +1,40 @@
+name: Encrypted database recovery verification
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 3 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: gurukull-recovery
+  cancel-in-progress: false
+jobs:
+  recovery:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Export, encrypt, decrypt and restore only in memory
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: node tools/release/recovery.mjs .private/recovery
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: encrypted-recovery-${{ github.run_id }}
+          path: |
+            .private/recovery/snapshot.enc
+            .private/recovery/manifest.json
+          include-hidden-files: true
+          retention-days: 30
+      - name: Erase runner copies of protected material
+        if: always()
+        run: rm -rf .private/recovery

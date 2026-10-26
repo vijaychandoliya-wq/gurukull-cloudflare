@@ -111,6 +111,35 @@
 .gk-metric-card { position: relative; overflow: hidden; }
 .gk-card-link { position: absolute; inset: 0; z-index: 1; }
 .gk-metric-icon { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; }
+.gk-dashboard-heading { margin-bottom: 0; }
+.gk-dashboard-eyebrow { color: #2563eb; font-size: 11px; font-weight: 800; letter-spacing: 1.4px; }
+.gk-dashboard-metric { height: 100%; border-color: var(--gk-border); box-shadow: 0 4px 16px rgba(16, 24, 40, .04); }
+.gk-dashboard-metric .ant-card-body { min-height: 128px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; }
+.gk-dashboard-metric-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 13px; font-size: 22px; }
+.gk-dashboard-metric-link { font-size: 12px; }
+.gk-dashboard-insight-card { height: 100%; border-color: var(--gk-border); box-shadow: 0 4px 16px rgba(16, 24, 40, .04); }
+.gk-dashboard-insight-card .ant-card-head { min-height: 56px; }
+.gk-dashboard-insight-card .ant-statistic-title { margin-bottom: 4px; color: var(--gk-text-secondary); font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .45px; }
+.gk-dashboard-insight-card .ant-statistic-content { font-size: 30px; font-weight: 750; letter-spacing: -.8px; }
+.gk-dashboard-supporting-row { margin-top: 4px; font-size: 12px; }
+.gk-dashboard-insight-card .ant-list-item { padding: 7px 0; }
+.gk-dashboard-insight-card .ant-divider { margin: 16px 0 12px; }
+.gk-fee-page .ant-card { border-color: var(--gk-border); box-shadow: 0 4px 16px rgba(16, 24, 40, .04); }
+.gk-fee-intro-card { background: linear-gradient(135deg, var(--gk-surface) 0%, var(--gk-surface-inset) 100%); }
+.gk-fee-intro-card .ant-card-body { padding: 20px 24px; }
+.gk-fee-intro-icon { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; color: #2563eb; background: #dbeafe; border-radius: 12px; font-size: 20px; }
+.gk-fee-currency-tag { margin-left: auto; white-space: nowrap; }
+.gk-fee-stat-card { height: 100%; }
+.gk-fee-stat-card .ant-card-body { min-height: 112px; display: flex; align-items: center; }
+.gk-fee-stat-card .ant-statistic-title { color: var(--gk-text-secondary); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.gk-fee-stat-card .ant-statistic-content { font-size: 25px; font-weight: 750; letter-spacing: -.6px; }
+.gk-fee-tabs .ant-tabs-nav { margin-bottom: 16px; }
+.gk-fee-tabs .ant-tabs-tab { padding: 12px 4px; font-weight: 650; }
+.gk-fee-tabs .ant-card-head-title { font-size: 16px; }
+.gk-fee-tabs .ant-table-wrapper { overflow-x: auto; }
+.gk-fee-form .ant-form-item { margin-bottom: 16px; }
+.gk-form-error { margin-bottom: 16px; }
+.gk-fee-policy-summary { margin: 18px 0 0 !important; padding: 14px 16px; background: var(--gk-surface-inset); border: 1px solid var(--gk-border); border-radius: 10px; }
 .gk-dashboard-row { margin-top: 16px; }
 .gk-equal-card { height: 100%; min-height: 360px; }
 .gk-list-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: #2563eb; background: #eff6ff; }
@@ -290,10 +319,6 @@
 :root[data-theme='dark'] .ant-list,
 :root[data-theme='dark'] .ant-collapse,
 :root[data-theme='dark'] .ant-segmented { background: var(--gk-surface); border-color: var(--gk-border); color: var(--gk-text-primary); }
-:root[data-theme='dark'] .ant-card[style*='background'],
-:root[data-theme='dark'] .ant-card[style*='background-color'],
-:root[data-theme='dark'] .ant-row[style*='background'],
-:root[data-theme='dark'] [class*='gk-'][style*='background'] { background: var(--gk-surface-inset) !important; border-color: var(--gk-border) !important; }
 :root[data-theme='dark'] .ant-btn.ant-btn-primary[style*='background'] { background: #3b82f6 !important; border-color: #3b82f6 !important; }
 :root[data-theme='dark'] .ant-card-head,
 :root[data-theme='dark'] .ant-card-bordered,
@@ -304,6 +329,7 @@
 :root[data-theme='dark'] .ant-table-thead > tr > th,
 :root[data-theme='dark'] .ant-table-tbody > tr > td { background: var(--gk-surface); color: var(--gk-text-primary); }
 :root[data-theme='dark'] .ant-table-tbody > tr:hover > td { background: var(--gk-surface-hover) !important; }
+.ant-table-placeholder > td { background: var(--gk-surface) !important; color: var(--gk-text-secondary); }
 :root[data-theme='dark'] .ant-empty-description,
 :root[data-theme='dark'] .ant-form-item-label > label,
 :root[data-theme='dark'] .ant-typography-secondary { color: var(--gk-text-secondary); }
@@ -350,3 +376,61 @@
   body { transition: none; }
 }
 
+
+/* Shared portal UX: scoped surfaces, reachable actions and responsive form layout. */
+.gk-breadcrumb { margin-bottom: 20px; }
+.gk-skip-link { position: fixed; top: -100px; left: 16px; z-index: 2000; padding: 12px 20px; color: var(--gk-text-primary); background: var(--gk-surface-raised); border: 2px solid var(--gk-focus); border-radius: 8px; }
+.gk-skip-link:focus { top: 8px; }
+.gk-record-header { padding: 24px; border: 1px solid var(--gk-border); border-radius: 12px; background: var(--gk-surface); }
+.gk-module-tabs { min-width: 0; width: 100%; }
+.gk-module-tabs .ant-tabs-content-holder { min-width: 0; }
+.gk-module-tabs .ant-tabs-nav { margin-bottom: 20px; }
+.gk-workflow-page .ant-card-body { min-width: 0; }
+.gk-workflow-page .ant-table-wrapper { max-width: 100%; overflow-x: auto; }
+.gk-person-drawer .ant-drawer-body { padding: 24px; }
+.gk-person-drawer .ant-steps { margin-bottom: 24px; }
+.gk-person-drawer .ant-drawer-footer { padding: 16px 24px; padding-bottom: max(16px, env(safe-area-inset-bottom)); background: var(--gk-surface-raised); border-top: 1px solid var(--gk-border); }
+.gk-error-links { padding-left: 16px; margin: 8px 0 0; }
+.gk-error-links .ant-btn { height: auto; white-space: normal; text-align: left; padding: 2px 0; }
+.gk-review-summary { margin-bottom: 20px; }
+.gk-context-help { background: var(--gk-surface); border: 1px solid var(--gk-border); border-radius: 8px; }
+.gk-sticky-actions { position: sticky; bottom: 0; z-index: 10; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 16px; background: var(--gk-surface-raised); border: 1px solid var(--gk-border); border-radius: 8px; }
+.gk-profile-copy { overflow: hidden; }
+.gk-profile-copy .ant-typography { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gk-header-inner > .ant-space:last-child { flex-shrink: 0; }
+.gk-table-toolbar { margin-bottom: 16px; }
+.gk-shell .ant-btn:disabled { cursor: not-allowed; }
+.gk-shell .ant-table-wrapper { max-width: 100%; }
+:root[data-theme='dark'] .gk-workflow-page .ant-table-thead > tr > th { background: var(--gk-surface-inset); }
+@media (max-width: 767px) {
+ .gk-record-header { padding: 16px; }
+ .gk-person-drawer .ant-drawer-content-wrapper { width: 100% !important; max-width: 100vw; }
+ .gk-person-drawer .ant-drawer-body { padding: 16px; }
+ .gk-person-drawer .ant-drawer-footer { padding-inline: 16px; }
+ .gk-person-drawer .ant-steps-item-title { font-size: 12px; }
+ .gk-person-drawer .ant-flex > .ant-form-item { min-width: 0 !important; flex-basis: 100% !important; }
+ .gk-content .ant-form-inline { display: flex; flex-direction: column; gap: 12px; }
+ .gk-content .ant-form-inline .ant-form-item { margin: 0; width: 100%; }
+ .gk-content .ant-form-inline .ant-select, .gk-content .ant-form-inline .ant-picker { width: 100%; min-width: 0 !important; }
+ .gk-header .ant-tag { margin: 0; }
+ .gk-header-inner { gap: 8px; }
+ .gk-sticky-actions { bottom: env(safe-area-inset-bottom,0); }
+ .gk-person-drawer .ant-btn { min-height: 44px; }
+ .gk-content .gk-page-heading h2 { font-size: 24px; }
+}
+@media (min-width: 768px) and (max-width: 1100px) {
+ .gk-profile-copy { max-width: 110px; }
+ .gk-global-search { min-width: 150px; width: 22vw; }
+}
+@media print { .gk-sticky-actions,.gk-breadcrumb,.gk-skip-link { display:none !important; } }
+.gk-timetable-agenda {display:none;}
+@media(max-width:767px){.gk-timetable-desktop{display:none;}.gk-timetable-agenda{display:block;}}
+
+.gk-nav-backdrop{display:none;}
+:root[data-theme='dark'] .gk-shell .ant-table-thead > tr > th {background:var(--gk-surface-inset);}
+@media(max-width:991px){.gk-shell .gk-sider{position:fixed !important;left:0;top:0;z-index:30;}.gk-nav-backdrop{display:block;position:fixed;inset:0;z-index:25;border:0;background:rgba(0,0,0,.45);}.gk-header{z-index:20;}}
+
+/* The platform sign-in has one panel, unlike the school split layout. */
+.gk-login-page.gk-platform-login{display:flex;align-items:center;justify-content:center;min-height:100dvh;}
+.gk-platform-login .gk-login-form-panel{flex:1;max-width:720px;padding:32px;}
+@media(max-width:767px){.gk-platform-header{height:auto;min-height:64px;line-height:normal;flex-wrap:wrap;gap:12px;padding:16px!important}.gk-platform-header>.ant-space{flex-wrap:wrap}.gk-platform-login .gk-login-form-panel{padding:24px 16px}}

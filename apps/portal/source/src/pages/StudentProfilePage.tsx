@@ -33,6 +33,7 @@ import {
 import { App as AntApp, Form, Input, InputNumber, Modal, Popconfirm, Select, Upload } from 'antd';
 import { UploadOutlined, PlusOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
 import { apiClient, API, withId } from '../services/api';
+import {AuthenticatedAvatar} from '../components/UserAvatar';
 
 const { Text, Title } = Typography;
 
@@ -672,7 +673,7 @@ export const StudentProfilePage: React.FC = () => {
           <Card>
             <Flex align="center" justify="space-between" wrap="wrap" gap={20}>
               <Flex align="center" gap={18}>
-                <Avatar size={88} src={student.avatar || undefined} icon={<UserOutlined />} />
+                <AuthenticatedAvatar name={student.fullName} src={student.avatar} size={88} />
                 <div>
                   <Title level={3} style={{ margin: 0 }}>{student.fullName}</Title>
                   <Space wrap>

@@ -12,9 +12,19 @@ export function parse<S extends z.ZodTypeAny>(schema:S,body:unknown):z.output<S>
 }
 export async function managementReady(c:ApiContext) {
  const school=c.get('school'),u=requireRole(c,'admin');
- const row=await db(c).prepare(`SELECT a.id FROM academic_years a JOIN school_configuration cfg ON cfg.school_id=a.school_id WHERE a.school_id=? AND a.is_current=1 AND cfg.configuration_verified_at IS NOT NULL AND cfg.timezone IS NOT NULL AND cfg.currency IS NOT NULL`).bind(u.school_id).first<{id:string}>();
- if(!row)fail(409,'SCHOOL_SETUP_REQUIRED','Save the real school settings and current academic year in Settings and Academics before adding people.');
- return {school,yearId:row.id};
+ const [configuration,currentYear]=await db(c).batch([
+  db(c).prepare('SELECT timezone,currency,configuration_verified_at FROM school_configuration WHERE school_id=?').bind(u.school_id),
+  db(c).prepare('SELECT id FROM academic_years WHERE school_id=? AND is_current=1').bind(u.school_id),
+ ]);
+ const cfg=configuration.results[0] as {timezone:string|null;currency:string|null;configuration_verified_at:number|null}|undefined;
+ const year=currentYear.results[0] as {id:string}|undefined;
+ if(!cfg?.configuration_verified_at || !cfg.timezone || !cfg.currency || !year){
+  const missing:string[]=[];
+  if(!cfg?.configuration_verified_at || !cfg.timezone || !cfg.currency)missing.push('verified school settings');
+  if(!year)missing.push('one current academic year');
+  fail(409,'SCHOOL_SETUP_REQUIRED',`Before adding a person, save ${missing.join(' and ')} in Settings and Academics for ${school.name}.`);
+ }
+ return {school,yearId:year.id};
 }
 export async function command(c:ApiContext,kind:string,input:unknown,build:()=>D1PreparedStatement[],response:Record<string,unknown>,allowed:User['user_type'][]=['admin']) {
  const u=requireRole(c,...allowed),database=db(c),commandId=c.req.header('Idempotency-Key');
@@ -26,7 +36,15 @@ export async function command(c:ApiContext,kind:string,input:unknown,build:()=>D
  try{
   const writes=build();
   writes.push(database.prepare('INSERT INTO mutation_commands(school_id,actor_id,command_id,request_hash,response_json,created_at) VALUES(?,?,?,?,?,unixepoch())').bind(u.school_id,u.id,commandId,hash,JSON.stringify(response)));
-  const result=await database.batch(writes);if(result.some(r=>!r.success))fail(503,'MANAGEMENT_WRITE_FAILED');
+  const result=await database.batch(writes);
+  const failed=result.find(r=>!r.success) as (D1Result<unknown>&{error?:string})|undefined;
+  if(failed){
+   const detail=String(failed.error||'');
+   if(detail.includes('UNIQUE constraint'))fail(409,'DUPLICATE_RECORD','This record conflicts with an existing email, mobile number, admission number, roll number, employee ID or academic value. Check the highlighted identifiers and try again.');
+   if(detail.includes('CHECK constraint'))fail(409,'RECORD_CHANGED','A related school record changed while saving. Reload the form and try again.');
+   if(detail.includes('FOREIGN KEY')||detail.includes('TENANT_RELATIONSHIP')||detail.includes('SECTION_CLASS'))fail(422,'INVALID_RELATIONSHIP','One of the selected school, class, section or account links is no longer available. Reload the form and select it again.');
+   fail(503,'MANAGEMENT_WRITE_FAILED','The record could not be saved because the database rejected one of its related records. Reload the form, review every highlighted field, and try again.');
+  }
  }catch(error){
   const raced=await prior();if(raced)return replay(raced);
   if(error instanceof HTTPException)throw error;

@@ -4,7 +4,7 @@ export const adminFeatures = [
     "path": "/dashboard",
     "title": "Dashboard",
     "status": "read_only",
-    "reason": "School setup status and genuine directory counts only. Attendance, finance and analytics are not implemented."
+    "reason": "Read-only operational overview with genuine directory counts, current-year attendance rates, fee collection totals, outstanding balances, homework/exam publication and pending leave summaries."
   },
   {
     "path": "/students",
@@ -142,7 +142,7 @@ export const adminFeatures = [
     "path": "/fees",
     "title": "Fees",
     "status": "implemented",
-    "reason": "Actual fee groups, student invoices, explicit numbering policy, integer currency collections/concessions, version/retry/overpayment checks, immutable receipts, ledger corrections and unpaid cancellation. Does not charge or refund through a provider; fee structures/bulk assignment, reminders and genuine financial reconciliation remain separate."
+    "reason": "Actual fee heads, fee structures, class/section assignment, student invoices, opening balances, explicit numbering policy, integer currency collections/concessions, version/retry/overpayment checks, immutable receipts, reminders, ledger corrections and unpaid cancellation. Does not charge or refund through a provider; genuine financial reconciliation remains separate."
   },
   {
     "path": "/payroll",

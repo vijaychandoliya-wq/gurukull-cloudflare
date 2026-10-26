@@ -1,0 +1,157 @@
+import { z } from 'zod';
+import type { Hono } from 'hono';
+import type { AppEnv, ApiContext } from './context.js';
+import { db, requireAuth, requireRole, readBody } from './context.js';
+import { fail } from './security.js';
+import { audit, cleanupGuards, command, dateInput, guard, parse, requiredText } from './management-common.js';
+import { workflowYear, workflowYearGuard, dateInYear } from './workflow-common.js';
+
+const optionalText = (max:number) => z.preprocess(v => v === undefined || (typeof v === 'string' && !v.trim()) ? null : v, z.string().trim().max(max).nullable());
+export const feeStructureInput = z.object({
+  feeGroupId: requiredText(100), name: requiredText(120), term: optionalText(80),
+  classId: optionalText(100), sectionId: optionalText(100), amountMinor: z.number().int().positive().max(1_000_000_000_000),
+  startsOn: dateInput, dueOn: dateInput, status: z.enum(['active','inactive']).default('active'),
+}).strict().refine(v => v.dueOn >= v.startsOn, { path: ['dueOn'], message: 'Due date must be on or after the fee start date.' });
+export const manualBalanceInput = z.object({
+  studentId: requiredText(100), name: requiredText(120), totalMinor: z.number().int().positive().max(1_000_000_000_000),
+  paidMinor: z.number().int().min(0).max(1_000_000_000_000).default(0), concessionMinor: z.number().int().min(0).max(1_000_000_000_000).default(0),
+  dueDate: dateInput, notes: optionalText(500),
+}).strict().refine(v => v.paidMinor + v.concessionMinor <= v.totalMinor, { path: ['paidMinor'], message: 'Paid amount plus concession cannot exceed the total balance.' });
+export const reminderInput = z.object({ invoiceId: requiredText(100), channel: z.enum(['whatsapp','email','sms']).default('whatsapp'), message: optionalText(1000) }).strict();
+export const feeAdjustmentInput = z.object({
+  invoiceId: requiredText(100), receiptId: requiredText(100), version: z.number().int().positive(),
+  amountMinor: z.number().int().positive().max(1_000_000_000_000), concessionMinor: z.number().int().min(0).max(1_000_000_000_000),
+  paymentMode: z.enum(['cash','cheque','bank_transfer','upi','card']), transactionRef: optionalText(100), paidOn: dateInput, reason: requiredText(500),
+}).strict();
+export const DEFAULT_FEE_GROUPS = ['Tuition Fee','Admission Fee','Exam Fee','Transport Fee','Hostel Fee','Annual Charges','Library Fee','Laboratory Fee','Extracurricular Fee','Miscellaneous Fee'];
+
+function money(v: unknown) { const n = Number(v); return Number.isSafeInteger(n) && n >= 0 ? n : 0; }
+function policyGuard(c: ApiContext, year: string, version: number, id: string) { const school = c.get('user').school_id; return guard(c, `EXISTS(SELECT 1 FROM finance_policy WHERE school_id=? AND academic_year_id=? AND version=? AND currency=(SELECT currency FROM school_configuration WHERE school_id=?))`, [school, year, version, school], id); }
+export function structureSelect() { return `SELECT f.id,f.name,f.term,f.amount_paise AS amountMinor,f.starts_on AS startsOn,f.due_on AS dueOn,f.status,f.version,f.class_id AS classId,f.section_id AS sectionId,fg.id AS feeGroupId,fg.name AS feeGroupName,c.name AS className,sn.name AS sectionName,COUNT(DISTINCT i.id) AS assignedStudents,COALESCE(SUM(CASE WHEN i.status!='cancelled' THEN i.amount_paise ELSE 0 END),0) AS grossMinor,COALESCE(SUM(CASE WHEN i.status!='cancelled' THEN i.paid_minor ELSE 0 END),0) AS paidMinor,COALESCE(SUM(CASE WHEN i.status!='cancelled' THEN i.concession_minor ELSE 0 END),0) AS concessionMinor FROM fee_structures f JOIN fee_groups fg ON fg.id=f.fee_group_id AND fg.school_id=f.school_id LEFT JOIN classes c ON c.id=f.class_id AND c.school_id=f.school_id LEFT JOIN sections sn ON sn.id=f.section_id AND sn.school_id=f.school_id LEFT JOIN fee_invoice_balances i ON i.structure_id=f.id AND i.school_id=f.school_id WHERE f.school_id=? AND f.archived_at IS NULL` }
+function csv(rows: Record<string,unknown>[]) { const keys = ['invoiceNo','studentName','admissionNo','className','feeName','amountMinor','paidMinor','concessionMinor','balanceMinor','dueDate','status']; const quote = (v:unknown) => `"${String(v ?? '').replaceAll('"','""')}"`; return [keys.join(','), ...rows.map(r => keys.map(k => quote(r[k])).join(','))].join('\n'); }
+
+export function registerFeeParityManagement(app: Hono<AppEnv>) {
+  app.get('/api/admin/fees/structures', requireAuth, async c => {
+    const u = requireRole(c, 'admin');
+    const year = await workflowYear(c);
+    const rows = await db(c).prepare(structureSelect() + ' AND f.academic_year_id=? GROUP BY f.id ORDER BY f.starts_on DESC,f.created_at DESC').bind(u.school_id, year.id).all();
+    if (!rows.success) fail(503, 'FEE_STRUCTURES_READ_FAILED');
+    return c.json({ data: rows.results });
+  });
+
+  app.get('/api/admin/fees/structures/:id', requireAuth, async c => {
+    const u = requireRole(c, 'admin');
+    const row = await db(c).prepare(structureSelect() + ' AND f.id=? GROUP BY f.id').bind(u.school_id, c.req.param('id')).first();
+    if (!row) fail(404, 'FEE_STRUCTURE_NOT_FOUND');
+    const students = await db(c).prepare(`SELECT i.id,i.invoice_no AS invoiceNo,i.status,i.amount_paise AS amountMinor,i.paid_minor AS paidMinor,i.concession_minor AS concessionMinor,i.amount_paise-i.paid_minor-i.concession_minor AS balanceMinor,u.full_name AS studentName,s.admission_no AS admissionNo FROM fee_invoice_balances i JOIN students s ON s.id=i.student_id AND s.school_id=i.school_id JOIN users u ON u.id=s.user_id AND u.school_id=s.school_id WHERE i.school_id=? AND i.structure_id=? ORDER BY u.full_name LIMIT 1000`).bind(u.school_id, c.req.param('id')).all();
+    return c.json({ data: { ...row, students: students.results } });
+  });
+
+  app.post('/api/admin/fees/default-groups', requireAuth, async c => {
+    const u = requireRole(c, 'admin');
+    const year = await workflowYear(c); const id = crypto.randomUUID(); const input = { groups: DEFAULT_FEE_GROUPS };
+    return c.json(await command(c, 'fee_groups.default', input, () => [
+      workflowYearGuard(c, year.id, id),
+      ...DEFAULT_FEE_GROUPS.map(name => db(c).prepare(`INSERT INTO fee_groups(id,school_id,name,description,created_at,updated_at) VALUES(?,?,?,?,unixepoch(),unixepoch()) ON CONFLICT(school_id,name) DO UPDATE SET archived_at=NULL,updated_at=unixepoch()`).bind(crypto.randomUUID(), u.school_id, name, `Standard ${name.toLowerCase()} fee head`)),
+      audit(c, 'create_default_fee_groups', 'fee_group', u.school_id), cleanupGuards(c, id)
+    ], { message: 'Standard fee heads are ready.', data: { groups: DEFAULT_FEE_GROUPS } }));
+  });
+
+  app.post('/api/admin/fees/structures', requireAuth, async c => {
+    const u = requireRole(c, 'admin'); const v = parse(feeStructureInput, await readBody(c)); const year = await workflowYear(c); dateInYear(v.startsOn, year); dateInYear(v.dueOn, year);
+    const id = crypto.randomUUID(), g = crypto.randomUUID();
+    return c.json(await command(c, 'fee_structure.create', v, () => [
+      workflowYearGuard(c, year.id, g),
+      guard(c, `EXISTS(SELECT 1 FROM fee_groups WHERE id=? AND school_id=? AND archived_at IS NULL) AND (? IS NULL OR EXISTS(SELECT 1 FROM classes WHERE id=? AND school_id=?)) AND (? IS NULL OR EXISTS(SELECT 1 FROM sections WHERE id=? AND school_id=? AND (? IS NULL OR class_id=?)))`, [v.feeGroupId,u.school_id,v.classId,v.classId,u.school_id,v.sectionId,v.sectionId,u.school_id,v.classId,v.classId], g+'-relations'),
+      db(c).prepare(`INSERT INTO fee_structures(id,school_id,academic_year_id,fee_group_id,class_id,section_id,name,term,amount_paise,starts_on,due_on,status,created_by,updated_by,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,unixepoch(),unixepoch())`).bind(id,u.school_id,year.id,v.feeGroupId,v.classId,v.sectionId,v.name,v.term,v.amountMinor,v.startsOn,v.dueOn,v.status,u.id,u.id),
+      audit(c, 'create', 'fee_structure', id), cleanupGuards(c,g), cleanupGuards(c,g+'-relations')
+    ], { message: 'Fee structure saved. Assign it to the eligible students when ready.', data: { id } }), 201);
+  });
+
+  app.put('/api/admin/fees/structures/:id', requireAuth, async c => {
+    const u = requireRole(c, 'admin'); const v = parse(feeStructureInput.and(z.object({ version: z.number().int().positive() })), await readBody(c)); const year = await workflowYear(c); dateInYear(v.startsOn, year); dateInYear(v.dueOn, year); const id = c.req.param('id')!, g = crypto.randomUUID();
+    return c.json(await command(c, 'fee_structure.update', { id, ...v }, () => [
+      workflowYearGuard(c, year.id, g),
+      guard(c, `EXISTS(SELECT 1 FROM fee_structures WHERE id=? AND school_id=? AND academic_year_id=? AND version=? AND archived_at IS NULL) AND NOT EXISTS(SELECT 1 FROM fee_invoices i JOIN fee_ledger_entries l ON l.invoice_id=i.id AND l.school_id=i.school_id WHERE i.structure_id=? AND i.school_id=?)`, [id,u.school_id,year.id,v.version,id,u.school_id], g+'-version'),
+      db(c).prepare(`UPDATE fee_structures SET fee_group_id=?,class_id=?,section_id=?,name=?,term=?,amount_paise=?,starts_on=?,due_on=?,status=?,version=version+1,updated_by=?,updated_at=unixepoch() WHERE id=? AND school_id=? AND version=?`).bind(v.feeGroupId,v.classId,v.sectionId,v.name,v.term,v.amountMinor,v.startsOn,v.dueOn,v.status,u.id,id,u.school_id,v.version),
+      audit(c, 'update', 'fee_structure', id), cleanupGuards(c,g), cleanupGuards(c,g+'-version')
+    ], { message: 'Fee structure updated.', data: { id, version: v.version + 1 } }));
+  });
+
+  app.delete('/api/admin/fees/structures/:id', requireAuth, async c => {
+    const u = requireRole(c, 'admin'); const v = parse(z.object({ version: z.number().int().positive() }).strict(), await readBody(c)); const id = c.req.param('id')!, g = crypto.randomUUID();
+    return c.json(await command(c, 'fee_structure.archive', { id, ...v }, () => [
+      guard(c, `EXISTS(SELECT 1 FROM fee_structures WHERE id=? AND school_id=? AND version=? AND archived_at IS NULL)`, [id,u.school_id,v.version], g),
+      db(c).prepare(`UPDATE fee_structures SET archived_at=unixepoch(),status='inactive',version=version+1,updated_by=?,updated_at=unixepoch() WHERE id=? AND school_id=? AND version=?`).bind(u.id,id,u.school_id,v.version),
+      audit(c, 'archive', 'fee_structure', id), cleanupGuards(c,g)
+    ], { message: 'Fee structure archived; issued invoices and receipts remain available.', data: { id, version: v.version + 1 } }));
+  });
+
+  app.post('/api/admin/fees/structures/:id/assign', requireAuth, async c => {
+    const u = requireRole(c, 'admin'); const year = await workflowYear(c); const id = c.req.param('id')!; const structure = await db(c).prepare(`SELECT f.*,f.version AS structureVersion,p.version AS policyVersion,p.invoice_prefix,p.number_width,p.next_invoice_number,p.currency FROM fee_structures f JOIN finance_policy p ON p.school_id=f.school_id AND p.academic_year_id=f.academic_year_id WHERE f.id=? AND f.school_id=? AND f.academic_year_id=? AND f.archived_at IS NULL`).bind(id,u.school_id,year.id).first<any>();
+    if (!structure) fail(404, 'FEE_STRUCTURE_NOT_FOUND');
+    const students = await db(c).prepare(`SELECT s.id,s.class_id,s.section_id FROM students s JOIN users us ON us.id=s.user_id AND us.school_id=s.school_id WHERE s.school_id=? AND s.academic_year_id=? AND s.status='active' AND us.status='active' AND (? IS NULL OR s.class_id=?) AND (? IS NULL OR s.section_id=?) AND NOT EXISTS(SELECT 1 FROM fee_invoices i WHERE i.school_id=s.school_id AND i.structure_id=? AND i.student_id=s.id) ORDER BY s.id LIMIT 500`).bind(u.school_id,year.id,structure.class_id,structure.class_id,structure.section_id,structure.section_id,id).all<any>();
+    const rows = students.results as Array<{id:string}>; if (!rows.length) return c.json({ message: 'No eligible students were found; no invoice was created.', data: { assigned: 0 } });
+    const g = crypto.randomUUID(); const start = Number(structure.next_invoice_number); const priorAssigned = Number((await db(c).prepare('SELECT COUNT(*) AS count FROM fee_invoices WHERE school_id=? AND structure_id=?').bind(u.school_id,id).first<{count:number}>())?.count||0); const writes = [workflowYearGuard(c,year.id,g), policyGuard(c,year.id,Number(structure.policyVersion),g+'-policy')];
+    // A single INSERT...SELECT keeps class-sized imports within D1 batch limits while
+    // window numbering gives every invoice a unique, auditable number.
+    writes.pop(); writes.push(guard(c, `EXISTS(SELECT 1 FROM finance_policy WHERE school_id=? AND academic_year_id=? AND version=? AND next_invoice_number=?)`, [u.school_id,year.id,Number(structure.policyVersion),start], g+'-policy'));
+    writes.push(db(c).prepare(`INSERT INTO fee_invoices(id,school_id,student_id,fee_group_id,structure_id,invoice_no,amount_paise,due_date,due_on,currency,academic_year_id,created_at,updated_at) SELECT lower(hex(randomblob(16))),s.school_id,s.id,f.fee_group_id,f.id,p.invoice_prefix||printf('%0*d',p.number_width,p.next_invoice_number+ROW_NUMBER() OVER(ORDER BY s.id)-1),f.amount_paise,unixepoch(f.due_on),f.due_on,p.currency,f.academic_year_id,unixepoch(),unixepoch() FROM students s JOIN users us ON us.id=s.user_id AND us.school_id=s.school_id JOIN fee_structures f ON f.id=? AND f.school_id=s.school_id JOIN finance_policy p ON p.school_id=f.school_id AND p.academic_year_id=f.academic_year_id WHERE s.school_id=? AND s.academic_year_id=? AND s.status='active' AND us.status='active' AND (f.class_id IS NULL OR s.class_id=f.class_id) AND (f.section_id IS NULL OR s.section_id=f.section_id) AND NOT EXISTS(SELECT 1 FROM fee_invoices old WHERE old.school_id=s.school_id AND old.structure_id=f.id AND old.student_id=s.id) LIMIT 500`).bind(id,u.school_id,year.id));
+    writes.push(db(c).prepare('UPDATE finance_policy SET next_invoice_number=next_invoice_number+(SELECT COUNT(*) FROM fee_invoices WHERE school_id=? AND structure_id=?)-? WHERE school_id=? AND academic_year_id=? AND next_invoice_number=?').bind(u.school_id,id,priorAssigned,u.school_id,year.id,start), audit(c,'assign','fee_structure',id), cleanupGuards(c,g), cleanupGuards(c,g+'-policy'));
+    const response = await command(c, 'fee_structure.assign', { id, count: rows.length }, () => writes, { message: `Fee structure assigned to ${rows.length} eligible students.`, data: { assigned: rows.length } });
+    return c.json(response, 201);
+  });
+
+  app.post('/api/admin/fees/manual-balance', requireAuth, async c => {
+    const u = requireRole(c, 'admin'); const v = parse(manualBalanceInput, await readBody(c)); const year = await workflowYear(c); dateInYear(v.dueDate, year); const policy = await db(c).prepare('SELECT * FROM finance_policy WHERE school_id=? AND academic_year_id=?').bind(u.school_id,year.id).first<any>(); if (!policy) fail(409,'ACTUAL_FINANCE_POLICY_REQUIRED');
+    const student = await db(c).prepare('SELECT id,class_id,section_id FROM students WHERE id=? AND school_id=? AND academic_year_id=? AND status=\'active\'').bind(v.studentId,u.school_id,year.id).first<any>(); if (!student) fail(422,'INVALID_RELATIONSHIP','Select an active student in the current academic year.');
+    const group = await db(c).prepare('SELECT id FROM fee_groups WHERE school_id=? AND name=? AND archived_at IS NULL').bind(u.school_id,'Migration & Arrears').first<{id:string}>(); const groupId = group?.id || crypto.randomUUID(); const structureId=crypto.randomUUID(), invoiceId=crypto.randomUUID(), receiptId=crypto.randomUUID(), g=crypto.randomUUID();
+    const writes = [guard(c,`EXISTS(SELECT 1 FROM finance_policy WHERE school_id=? AND academic_year_id=? AND version=? AND next_invoice_number=? AND next_receipt_number=?)`,[u.school_id,year.id,policy.version,policy.next_invoice_number,policy.next_receipt_number],g+'-policy')];
+    if (!group) writes.push(db(c).prepare(`INSERT INTO fee_groups(id,school_id,name,description,created_at,updated_at) VALUES(?,?,?,?,unixepoch(),unixepoch())`).bind(groupId,u.school_id,'Migration & Arrears','Opening balance imported from the previous portal.'));
+    writes.push(db(c).prepare(`INSERT INTO fee_structures(id,school_id,academic_year_id,fee_group_id,class_id,section_id,name,term,amount_paise,starts_on,due_on,status,created_by,updated_by,created_at,updated_at) VALUES(?,?,?,?,?,?,?,NULL,?,?,?,'active',?,?,unixepoch(),unixepoch())`).bind(structureId,u.school_id,year.id,groupId,student.class_id,student.section_id,v.name,v.totalMinor,v.dueDate,v.dueDate,u.id,u.id));
+    writes.push(db(c).prepare(`UPDATE finance_policy SET next_invoice_number=next_invoice_number+1,next_receipt_number=next_receipt_number+? WHERE school_id=? AND academic_year_id=?`).bind(v.paidMinor+v.concessionMinor>0?1:0,u.school_id,year.id));
+    writes.push(db(c).prepare(`INSERT INTO fee_invoices(id,school_id,student_id,fee_group_id,structure_id,invoice_no,amount_paise,due_date,due_on,currency,academic_year_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,unixepoch(),unixepoch())`).bind(invoiceId,u.school_id,v.studentId,groupId,structureId,`${policy.invoice_prefix}${String(policy.next_invoice_number).padStart(policy.number_width,'0')}`,v.totalMinor,Date.parse(v.dueDate+'T00:00:00Z')/1000,v.dueDate,policy.currency,year.id));
+    if (v.paidMinor+v.concessionMinor>0) writes.push(db(c).prepare(`INSERT INTO fee_ledger_entries(id,school_id,invoice_id,student_id,academic_year_id,currency,receipt_no,entry_type,amount_minor,concession_minor,payment_mode,transaction_ref,paid_on,remarks,created_by,created_at) VALUES(?,?,?,?,?,?,?,'collection',?,?, 'cash',NULL,?,?,unixepoch())`).bind(receiptId,u.school_id,invoiceId,v.studentId,year.id,policy.currency,`${policy.receipt_prefix}${String(policy.next_receipt_number).padStart(policy.number_width,'0')}`,v.paidMinor,v.concessionMinor,v.dueDate,v.notes||'Opening balance migration',u.id));
+    writes.push(db(c).prepare(`UPDATE fee_invoices SET status=CASE WHEN ?+?=amount_paise THEN 'paid' WHEN ?+?>0 THEN 'partially_paid' ELSE 'unpaid' END,version=version+1 WHERE id=? AND school_id=?`).bind(v.paidMinor,v.concessionMinor,v.paidMinor,v.concessionMinor,invoiceId,u.school_id), audit(c,'create','manual_balance',invoiceId), cleanupGuards(c,g+'-policy'));
+    return c.json(await command(c,'fee.manual_balance',v,()=>writes,{message:'Opening balance recorded with an auditable invoice.',data:{invoiceId,structureId}}),201);
+  });
+
+  app.post('/api/admin/fees/reminders', requireAuth, async c => {
+    const u = requireRole(c, 'admin'); const v = parse(reminderInput, await readBody(c)); const row = await db(c).prepare(`SELECT i.id,i.amount_paise,i.paid_minor,i.concession_minor,i.due_on,i.invoice_no,s.id AS student_id,s.user_id,stu.full_name AS student_name,stu.mobile AS student_mobile,stu.email AS student_email,pu.mobile AS parent_mobile,pu.email AS parent_email,sc.name AS school_name FROM fee_invoice_balances i JOIN students s ON s.id=i.student_id AND s.school_id=i.school_id JOIN users stu ON stu.id=s.user_id AND stu.school_id=s.school_id JOIN schools sc ON sc.id=i.school_id LEFT JOIN parent_student_links pl ON pl.school_id=s.school_id AND pl.student_id=s.id LEFT JOIN users pu ON pu.id=pl.parent_user_id AND pu.school_id=s.school_id WHERE i.school_id=? AND i.id=? AND i.status!='cancelled' LIMIT 1`).bind(u.school_id,v.invoiceId).first<any>();
+    if (!row) fail(404,'INVOICE_NOT_FOUND'); if (money(row.paid_minor)+money(row.concession_minor)>=money(row.amount_paise)) fail(409,'INVOICE_ALREADY_PAID');
+    const recipient = v.channel==='whatsapp' ? (row.parent_mobile||row.student_mobile) : (row.parent_email||row.student_email); if (!recipient) fail(422,'MEMBER_CONTACT_REQUIRED','The linked parent or student has no contact for this reminder.');
+    const recent = await db(c).prepare(`SELECT id FROM fee_reminders WHERE school_id=? AND invoice_id=? AND channel=? AND created_at>unixepoch()-86400 LIMIT 1`).bind(u.school_id,v.invoiceId,v.channel).first(); if (recent) fail(409,'REMINDER_ALREADY_SENT','A reminder for this invoice and channel was already queued in the last 24 hours.');
+    const id=crypto.randomUUID(), configured = v.channel==='whatsapp' ? !!(c.env.WHATSAPP_ACCESS_TOKEN&&c.env.WHATSAPP_PHONE_NUMBER_ID&&c.env.WHATSAPP_PASSWORD_TEMPLATE) : v.channel==='email' ? !!c.env.EMAIL : false;
+    const message=v.message||`Fee reminder for invoice ${row.invoice_no}: the outstanding balance is ${money(row.amount_paise)-money(row.paid_minor)-money(row.concession_minor)} minor currency units, due ${row.due_on}.`;
+    const g=crypto.randomUUID(); const response=await command(c,'fee.reminder',{...v,recipient},()=>[db(c).prepare(`INSERT INTO fee_reminders(id,school_id,invoice_id,student_id,channel,recipient,message,status,sent_at,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,unixepoch())`).bind(id,u.school_id,v.invoiceId,row.student_id,v.channel,recipient,message,configured?'queued':'provider_not_configured',configured?Math.floor(Date.now()/1000):null,u.id),audit(c,'queue','fee_reminder',id)],{message:configured?'Reminder queued for delivery.':'Reminder recorded, but the selected delivery provider is not configured.',data:{id,status:configured?'queued':'provider_not_configured',recipient}}); return c.json(response,201);
+  });
+  app.get('/api/admin/fees/reminders', requireAuth, async c => { const u=requireRole(c,'admin'); const rows=await db(c).prepare(`SELECT r.id,r.invoice_id AS invoiceId,r.channel,r.recipient,r.status,r.message,r.created_at AS createdAt,r.sent_at AS sentAt,u.full_name AS studentName FROM fee_reminders r JOIN students s ON s.id=r.student_id AND s.school_id=r.school_id JOIN users u ON u.id=s.user_id AND u.school_id=s.school_id WHERE r.school_id=? ORDER BY r.created_at DESC LIMIT 500`).bind(u.school_id).all(); return c.json({data:rows.results}); });
+  app.get('/api/admin/fees/reminders/summary', requireAuth, async c => { const u=requireRole(c,'admin'); const row=await db(c).prepare(`SELECT COUNT(*) AS total,COALESCE(SUM(CASE WHEN status='provider_not_configured' THEN 1 ELSE 0 END),0) AS providerNotConfigured,COALESCE(SUM(CASE WHEN created_at>unixepoch()-86400 THEN 1 ELSE 0 END),0) AS last24Hours FROM fee_reminders WHERE school_id=?`).bind(u.school_id).first(); return c.json({data:row||{total:0,providerNotConfigured:0,last24Hours:0}}); });
+  app.post('/api/admin/fees/structures/:id/remind-all', requireAuth, async c => {
+    const u=requireRole(c,'admin'); const id=c.req.param('id'); const body=await readBody(c); const parsed=parse(z.object({channel:z.enum(['whatsapp','email','sms']).default('whatsapp'),message:optionalText(1000)}).strict(),body); const configured=parsed.channel==='whatsapp' ? !!(c.env.WHATSAPP_ACCESS_TOKEN&&c.env.WHATSAPP_PHONE_NUMBER_ID&&c.env.WHATSAPP_PASSWORD_TEMPLATE) : parsed.channel==='email' ? !!c.env.EMAIL : false; const status=configured?'queued':'provider_not_configured';
+    const structure=await db(c).prepare('SELECT id FROM fee_structures WHERE id=? AND school_id=? AND archived_at IS NULL').bind(id,u.school_id).first(); if(!structure)fail(404,'FEE_STRUCTURE_NOT_FOUND');
+    const now=Math.floor(Date.now()/1000),message=parsed.message||'Fee reminder: your school account has an outstanding balance. Please contact the school office for the invoice and due date.'; const result=await db(c).prepare(`INSERT INTO fee_reminders(id,school_id,invoice_id,student_id,channel,recipient,message,status,sent_at,created_by,created_at) SELECT lower(hex(randomblob(16))),i.school_id,i.id,i.student_id,?,CASE WHEN ?='whatsapp' THEN COALESCE((SELECT pu.mobile FROM parent_student_links pl JOIN users pu ON pu.id=pl.parent_user_id AND pu.school_id=pl.school_id WHERE pl.school_id=i.school_id AND pl.student_id=i.student_id LIMIT 1),stu.mobile) ELSE COALESCE((SELECT pu.email FROM parent_student_links pl JOIN users pu ON pu.id=pl.parent_user_id AND pu.school_id=pl.school_id WHERE pl.school_id=i.school_id AND pl.student_id=i.student_id LIMIT 1),stu.email) END,?,?,?,unixepoch(),?,unixepoch() FROM fee_invoice_balances i JOIN students s ON s.id=i.student_id AND s.school_id=i.school_id JOIN users stu ON stu.id=s.user_id AND stu.school_id=s.school_id WHERE i.school_id=? AND i.structure_id=? AND i.status!='cancelled' AND i.paid_minor+i.concession_minor<i.amount_paise AND NOT EXISTS(SELECT 1 FROM fee_reminders old WHERE old.school_id=i.school_id AND old.invoice_id=i.id AND old.channel=? AND old.created_at>unixepoch()-86400) AND ((?='whatsapp' AND (EXISTS(SELECT 1 FROM parent_student_links pl JOIN users pu ON pu.id=pl.parent_user_id WHERE pl.school_id=i.school_id AND pl.student_id=i.student_id AND pu.mobile IS NOT NULL) OR stu.mobile IS NOT NULL)) OR (?!='whatsapp' AND (EXISTS(SELECT 1 FROM parent_student_links pl JOIN users pu ON pu.id=pl.parent_user_id WHERE pl.school_id=i.school_id AND pl.student_id=i.student_id AND pu.email IS NOT NULL) OR stu.email IS NOT NULL)))`).bind(parsed.channel,parsed.channel,message,status,configured?now:null,u.id,u.school_id,id,parsed.channel,parsed.channel,parsed.channel).run();
+    if(!result.success)fail(503,'FEE_REMINDER_WRITE_FAILED'); return c.json({message:`${result.meta?.changes||0} reminders recorded.`,data:{status,queued:Number(result.meta?.changes||0)}} ,201);
+  });
+
+  app.post('/api/admin/fees/invoices/:id/adjust', requireAuth, async c => {
+    const u = requireRole(c, 'admin'); const body = await readBody(c); const v = parse(feeAdjustmentInput, { ...body, invoiceId: c.req.param('id') });
+    if (v.paymentMode !== 'cash' && !v.transactionRef) fail(422, 'VALIDATION_FAILED', 'Enter the actual non-cash transaction reference.');
+    const year = await workflowYear(c); dateInYear(v.paidOn, year); const policy = await db(c).prepare('SELECT * FROM finance_policy WHERE school_id=? AND academic_year_id=?').bind(u.school_id,year.id).first<any>(); if (!policy) fail(409,'ACTUAL_FINANCE_POLICY_REQUIRED');
+    const old = await db(c).prepare(`SELECT l.*,i.amount_paise,i.version AS invoice_version,i.status AS invoice_status FROM fee_ledger_entries l JOIN fee_invoices i ON i.id=l.invoice_id AND i.school_id=l.school_id WHERE l.school_id=? AND l.id=? AND l.invoice_id=? AND l.entry_type='collection' AND NOT EXISTS(SELECT 1 FROM fee_ledger_entries r WHERE r.school_id=l.school_id AND r.reverses_id=l.id)`).bind(u.school_id,v.receiptId,v.invoiceId).first<any>();
+    if (!old) fail(404,'RECEIPT_NOT_FOUND'); if (Number(old.invoice_version)!==v.version) fail(409,'RECORD_CHANGED','The invoice changed. Reload it before correcting the receipt.'); if (v.paidOn < old.paid_on) fail(422,'INVALID_DATE','Correction date cannot be before the original receipt date.');
+    const replacementId=crypto.randomUUID(), reversalId=crypto.randomUUID(), g=crypto.randomUUID();
+    return c.json(await command(c,'fee.adjust',{...v,schoolId:u.school_id},()=>[
+      policyGuard(c,year.id,policy.version,g+'-policy'),
+      guard(c,`EXISTS(SELECT 1 FROM fee_ledger_entries l JOIN fee_invoice_balances b ON b.school_id=l.school_id AND b.id=l.invoice_id WHERE l.school_id=? AND l.id=? AND l.invoice_id=? AND l.entry_type='collection' AND NOT EXISTS(SELECT 1 FROM fee_ledger_entries r WHERE r.school_id=l.school_id AND r.reverses_id=l.id) AND b.version=? AND b.status!='cancelled' AND b.amount_paise-b.paid_minor-b.concession_minor+l.amount_minor+l.concession_minor>=?)`,[u.school_id,v.receiptId,v.invoiceId,v.version,v.amountMinor+v.concessionMinor],g+'-balance'),
+      db(c).prepare('UPDATE finance_policy SET next_receipt_number=next_receipt_number+2 WHERE school_id=? AND academic_year_id=? AND version=?').bind(u.school_id,year.id,policy.version),
+      db(c).prepare(`INSERT INTO fee_ledger_entries(id,school_id,invoice_id,student_id,academic_year_id,currency,receipt_no,entry_type,amount_minor,concession_minor,payment_mode,transaction_ref,paid_on,remarks,created_by,created_at,reverses_id) SELECT ?,school_id,invoice_id,student_id,academic_year_id,currency,?,'reversal',-amount_minor,-concession_minor,payment_mode,transaction_ref,?,?,?,unixepoch(),id FROM fee_ledger_entries WHERE school_id=? AND id=?`).bind(reversalId,`${policy.receipt_prefix}${String(policy.next_receipt_number).padStart(policy.number_width,'0')}`,v.paidOn,v.reason,u.id,u.school_id,v.receiptId),
+      db(c).prepare(`INSERT INTO fee_ledger_entries(id,school_id,invoice_id,student_id,academic_year_id,currency,receipt_no,entry_type,amount_minor,concession_minor,payment_mode,transaction_ref,paid_on,remarks,created_by,created_at) SELECT ?,invoice_id,student_id,academic_year_id,currency,?,'collection',?,?,?,?,?,?,?,unixepoch() FROM fee_ledger_entries WHERE school_id=? AND id=?`).bind(replacementId,`${policy.receipt_prefix}${String(policy.next_receipt_number+1).padStart(policy.number_width,'0')}`,v.amountMinor,v.concessionMinor,v.paymentMode,v.transactionRef,v.paidOn,`Adjustment: ${v.reason}`,u.id,u.school_id,v.receiptId),
+      db(c).prepare(`UPDATE fee_invoices SET status=CASE WHEN (SELECT paid_minor+concession_minor FROM fee_invoice_balances WHERE school_id=? AND id=? )=amount_paise THEN 'paid' WHEN (SELECT paid_minor+concession_minor FROM fee_invoice_balances WHERE school_id=? AND id=?)>0 THEN 'partially_paid' ELSE 'unpaid' END,version=version+1,updated_at=unixepoch() WHERE school_id=? AND id=? AND version=?`).bind(u.school_id,v.invoiceId,u.school_id,v.invoiceId,u.school_id,v.invoiceId,v.version),
+      audit(c,'adjust','fee_invoice',v.invoiceId), cleanupGuards(c,g), cleanupGuards(c,g+'-policy'), cleanupGuards(c,g+'-balance')
+    ],{message:'Receipt corrected with an immutable reversal and replacement entry.',data:{invoiceId:v.invoiceId,reversalId,replacementId,version:v.version+1}}));
+  });
+
+  app.get('/api/admin/fees/reports/summary', requireAuth, async c => { const u=requireRole(c,'admin'); const year=await workflowYear(c); const r=await db(c).prepare(`SELECT COUNT(*) AS invoices,COALESCE(SUM(CASE WHEN status!='cancelled' THEN amount_paise ELSE 0 END),0) AS grossMinor,COALESCE(SUM(CASE WHEN status!='cancelled' THEN paid_minor ELSE 0 END),0) AS paidMinor,COALESCE(SUM(CASE WHEN status!='cancelled' THEN concession_minor ELSE 0 END),0) AS concessionMinor,COALESCE(SUM(CASE WHEN status!='cancelled' AND due_on<date('now') AND paid_minor+concession_minor<amount_paise THEN 1 ELSE 0 END),0) AS overdueInvoices FROM fee_invoice_balances WHERE school_id=? AND academic_year_id=?`).bind(u.school_id,year.id).first<any>(); return c.json({data:{...r,outstandingMinor:money(r?.grossMinor)-money(r?.paidMinor)-money(r?.concessionMinor)}}); });
+  app.get('/api/admin/fees/reports/export', requireAuth, async c => { const u=requireRole(c,'admin'); const rows=await db(c).prepare(`SELECT i.invoice_no AS invoiceNo,stu.full_name AS studentName,s.admission_no AS admissionNo,cl.name||' - '||sec.name AS className,g.name AS feeName,i.amount_paise AS amountMinor,i.paid_minor AS paidMinor,i.concession_minor AS concessionMinor,i.amount_paise-i.paid_minor-i.concession_minor AS balanceMinor,i.due_on AS dueDate,i.status FROM fee_invoice_balances i JOIN students s ON s.id=i.student_id AND s.school_id=i.school_id JOIN users stu ON stu.id=s.user_id AND stu.school_id=s.school_id JOIN fee_groups g ON g.id=i.fee_group_id AND g.school_id=i.school_id LEFT JOIN classes cl ON cl.id=s.class_id AND cl.school_id=s.school_id LEFT JOIN sections sec ON sec.id=s.section_id AND sec.school_id=s.school_id WHERE i.school_id=? ORDER BY i.due_on,i.invoice_no`).bind(u.school_id).all<Record<string,unknown>>(); c.header('content-type','text/csv; charset=utf-8'); c.header('content-disposition','attachment; filename="fee-report.csv"'); return c.body(csv(rows.results)); });
+}

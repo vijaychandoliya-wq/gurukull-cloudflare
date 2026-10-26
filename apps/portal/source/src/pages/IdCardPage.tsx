@@ -29,6 +29,7 @@ import {
 } from '@ant-design/icons';
 import { apiClient, API } from '../services/api';
 import '../styles/print.css';
+import {AuthenticatedAvatar} from '../components/UserAvatar';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -99,16 +100,12 @@ const StudentIdCard: React.FC<{
 
     <div className="gk-id-card-body">
       <div className="gk-id-card-photo" aria-label={`Photo of ${student.fullName}`}>
-        <span>Photo unavailable</span>
-        {student.avatar && (
-          <img
-            src={student.avatar}
-            alt=""
-            onError={(event) => {
-              event.currentTarget.style.display = 'none';
-            }}
-          />
-        )}
+        <AuthenticatedAvatar
+          name={student.fullName}
+          src={student.avatar}
+          size={72}
+          alt={`Avatar for ${student.fullName}`}
+        />
       </div>
 
       <div className="gk-id-card-details">
@@ -116,8 +113,7 @@ const StudentIdCard: React.FC<{
         <div className="gk-id-card-grid">
           <span>{isTeacher ? 'Role' : 'Class'}</span>
           <strong>{student.className || '—'}</strong>
-          <span>Roll no</span>
-          <strong>{student.rollNumber || '—'}</strong>
+          {!isTeacher&&<><span>Roll no</span><strong>{student.rollNumber||'—'}</strong></>}
           <span>{isTeacher ? 'Emp ID' : 'Admission'}</span>
           <strong>{student.registrationNumber || '—'}</strong>
           <span>DOB</span>
@@ -227,7 +223,7 @@ export const IdCardPage: React.FC<IdCardPageProps> = ({ variant = 'student' }) =
       dataIndex: 'fullName',
       render: (_, record) => (
         <Space>
-          <Avatar src={record.avatar || undefined}>{initials(record.fullName)}</Avatar>
+          <AuthenticatedAvatar name={record.fullName} src={record.avatar} />
           <div>
             <div>{record.fullName}</div>
             <Text type="secondary" style={{ fontSize: 12 }}>

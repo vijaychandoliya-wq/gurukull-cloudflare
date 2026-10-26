@@ -1,3 +1,4 @@
+import {NotFoundPage} from './pages/NotFoundPage';
 import {PayrollManagementPage} from './pages/PayrollManagementPage';
 import {QuizManagementPage} from './pages/QuizManagementPage';
 import {LiveClassManagementPage} from './pages/LiveClassManagementPage';
@@ -110,7 +111,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="/live-classes" element={<LiveClassManagementPage />} />
                 <Route path="/settings" element={<SchoolSetupPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </AppLayout>
           </RequireAuth>

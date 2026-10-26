@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Button, Avatar, Dropdown, Input, Space, Typography, Tag, Badge } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Menu, Button, Avatar, Dropdown, Input, Space, Typography, Tag, Breadcrumb } from 'antd';
 import type { MenuProps } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -30,6 +30,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
+import {humanize} from '../../ux/format';
 import { ThemeSwitcher } from '../ThemeSwitcher';
 
 const { Header, Sider, Content } = Layout;
@@ -39,89 +40,18 @@ const { Text } = Typography;
  * Menu grouping follows the production SchoolAdminShell so the information
  * architecture matches app.gurukull.in rather than a flat invented list.
  */
-const MENU: MenuProps['items'] = [
-  { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
-  {
-    key: 'people',
-    icon: <TeamOutlined />,
-    label: 'People',
-    children: [
-      { key: '/students', icon: <TeamOutlined />, label: 'Students' },
-      { key: '/parents', icon: <UserOutlined />, label: 'Parents' },
-      { key: '/teachers', icon: <ReadOutlined />, label: 'Teachers' },
-      { key: '/teacher-id-cards', icon: <IdcardOutlined />, label: 'Teacher ID cards' },
-      { key: '/staff', icon: <SolutionOutlined />, label: 'Staff' },
-      { key: '/staff-id-cards', icon: <IdcardOutlined />, label: 'Staff ID cards' },
-      { key: '/id-cards', icon: <IdcardOutlined />, label: 'Student ID cards' },
-    ],
-  },
-  {
-    key: 'academics',
-    icon: <BookOutlined />,
-    label: 'Academics',
-    children: [
-      { key: '/academics', icon: <BookOutlined />, label: 'Classes & subjects' },
-      { key: '/imports', icon: <InboxOutlined />, label: 'Bulk import' },
-      { key: '/subjects', icon: <ReadOutlined />, label: 'Subjects catalog' },
-      { key: '/timetable', icon: <CalendarOutlined />, label: 'Timetable' },
-      { key: '/exams', icon: <SolutionOutlined />, label: 'Exams & grading' },
-      { key: '/quizzes', icon: <QuestionCircleOutlined />, label: 'Online quizzes' },
-      { key: '/certificates', icon: <FileDoneOutlined />, label: 'Certificates' },
-      { key: '/promotion', icon: <RiseOutlined />, label: 'Promotions' },
-      { key: '/homework', icon: <FileTextOutlined />, label: 'Homework' },
-      { key: '/lesson-plans', icon: <FileTextOutlined />, label: 'Lesson plans' },
-      { key: '/notices', icon: <NotificationOutlined />, label: 'Notices' },
-    ],
-  },
-  {
-    key: 'attendance',
-    icon: <CheckSquareOutlined />,
-    label: 'Attendance & wellbeing',
-    children: [
-      { key: '/attendance', icon: <CheckSquareOutlined />, label: 'Student attendance' },
-      { key: '/leaves', icon: <CalendarOutlined />, label: 'Staff leave' },
-      { key: '/discipline', icon: <SafetyCertificateOutlined />, label: 'Student conduct' },
-    ],
-  },
-  {
-    key: 'frontoffice',
-    icon: <ContactsOutlined />,
-    label: 'Front office',
-    children: [
-      { key: '/reception', icon: <ContactsOutlined />, label: 'Reception' },
-      { key: '/alumni', icon: <TeamOutlined />, label: 'Alumni' },
-    ],
-  },
-  {
-    key: 'finance',
-    icon: <WalletOutlined />,
-    label: 'Finance & logistics',
-    children: [
-      { key: '/fees', icon: <WalletOutlined />, label: 'Fees & collections' },
-      { key: '/payroll', icon: <WalletOutlined />, label: 'Payroll' },
-      { key: '/transport', icon: <CarOutlined />, label: 'Transport' },
-      { key: '/inventory', icon: <InboxOutlined />, label: 'Inventory' },
-      { key: '/library', icon: <ReadOutlined />, label: 'Library' },
-    ],
-  },
-  {
-    key: 'communication',
-    icon: <NotificationOutlined />,
-    label: 'Communication',
-    children: [
-      { key: '/live-classes', icon: <VideoCameraOutlined />, label: 'Live classes' },
-    ],
-  },
-  {
-    key: 'reports',
-    icon: <SettingOutlined />,
-    label: 'Reports & settings',
-    children: [
-      { key: '/settings', icon: <SettingOutlined />, label: 'Settings' },
-      { key: '/roles', icon: <UserOutlined />, label: 'Roles & access' },
-      { key: '/feature-report', icon: <FileDoneOutlined />, label: 'Feature status' },
-    ],
-  },
+const item=(key:string,label:string,icon:React.ReactNode)=>({key,icon,label});
+const MENU:MenuProps['items']=[
+ item('/dashboard','Overview',<DashboardOutlined/>),
+ {key:'people',icon:<TeamOutlined/>,label:'People',children:[item('/students','Students',<TeamOutlined/>),item('/parents','Parents & guardians',<UserOutlined/>),item('/teachers','Teachers',<ReadOutlined/>),item('/staff','Staff',<SolutionOutlined/>),item('/id-cards','Student ID cards',<IdcardOutlined/>),item('/teacher-id-cards','Teacher ID cards',<IdcardOutlined/>),item('/staff-id-cards','Staff ID cards',<IdcardOutlined/>)]},
+ {key:'academics',icon:<BookOutlined/>,label:'Academics',children:[item('/academics','Academic years & classes',<BookOutlined/>),item('/imports','Bulk import',<InboxOutlined/>),item('/subjects','Subjects & assignments',<ReadOutlined/>),item('/timetable','Timetable',<CalendarOutlined/>),item('/homework','Homework',<FileTextOutlined/>),item('/lesson-plans','Lesson plans',<FileTextOutlined/>)]},
+ {key:'assessment',icon:<SolutionOutlined/>,label:'Assessment',children:[item('/exams','Exams, marks & results',<SolutionOutlined/>),item('/quizzes','Quizzes',<QuestionCircleOutlined/>)]},
+ {key:'attendance',icon:<CheckSquareOutlined/>,label:'Attendance & wellbeing',children:[item('/attendance','Student attendance',<CheckSquareOutlined/>),item('/leaves','Staff leave',<CalendarOutlined/>),item('/discipline','Student conduct',<SafetyCertificateOutlined/>)]},
+ {key:'finance',icon:<WalletOutlined/>,label:'Finance',children:[item('/fees','Fees & collections',<WalletOutlined/>),item('/payroll','Payroll',<WalletOutlined/>)]},
+ {key:'operations',icon:<InboxOutlined/>,label:'Campus operations',children:[item('/library','Library',<ReadOutlined/>),item('/transport','Transport',<CarOutlined/>),item('/inventory','Inventory',<InboxOutlined/>),item('/reception','Reception',<ContactsOutlined/>)]},
+ {key:'communication',icon:<NotificationOutlined/>,label:'Communication',children:[item('/notices','Notices',<NotificationOutlined/>),item('/live-classes','Live classes',<VideoCameraOutlined/>)]},
+ {key:'records',icon:<FileDoneOutlined/>,label:'Records',children:[item('/certificates','Certificates',<FileDoneOutlined/>),item('/promotion','Promotions & graduation',<RiseOutlined/>),item('/alumni','Alumni',<TeamOutlined/>)]},
+ {key:'reports',icon:<SettingOutlined/>,label:'Administration',children:[item('/settings','School settings',<SettingOutlined/>),item('/roles','Users & access',<UserOutlined/>),item('/feature-report','Feature status',<FileDoneOutlined/>)]},
 ];
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -129,17 +59,22 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   const { user, schoolCode, schoolName, academicYear, schoolLogo, logout,hasRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const navigateSafely=(path:string)=>{const event=new CustomEvent('gk-before-navigate',{cancelable:true,detail:{proceed:()=>navigate(path)}});if(window.dispatchEvent(event))navigate(path);};
 
-  const sectionKeys = ['people', 'academics', 'attendance', 'frontoffice', 'finance', 'communication', 'reports'];
-  const activeSection = MENU.find((item: any) => item && Array.isArray(item.children) && item.children.some((child: any) => child.key === location.pathname)) as any;
+  const sectionKeys = ['people','academics','assessment','attendance','finance','operations','communication','records','reports'];
+  const routeRoot='/'+location.pathname.split('/')[1];
+  const rootPath=['/marks-entry','/exam-results'].includes(routeRoot)?'/exams':routeRoot;
+  const activeSection = MENU.find((item: any) => item && Array.isArray(item.children) && item.children.some((child: any) => child.key === rootPath)) as any;
   const [openKeys, setOpenKeys] = useState<string[]>(() => activeSection ? [activeSection.key] : ['people']);
+  useEffect(()=>{if(activeSection)setOpenKeys([activeSection.key]);},[rootPath]);
+  const currentPage=(MENU.flatMap((item:any)=>item?.children||[item]) as any[]).find(item=>item.key===rootPath)?.label||humanize(rootPath.slice(1));
 
   const userMenu: MenuProps['items'] = [
     {
       key: 'profile',
       icon: <UserOutlined />,
       label: 'My profile',
-      onClick: () => navigate('/profile'),
+      onClick: () => navigateSafely('/profile'),
     },
     { type: 'divider' },
     {
@@ -153,7 +88,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   ];
 
   return (
-    <Layout className="gk-shell">
+    <Layout className="gk-shell"><a href="#portal-main" className="gk-skip-link">Skip to content</a>
       <Sider
         theme="light"
         width={248}
@@ -162,6 +97,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         collapsed={collapsed}
         trigger={null}
         breakpoint="lg"
+        onBreakpoint={matches=>setCollapsed(matches)}
         className="gk-sider"
       >
         <div className="gk-brand">
@@ -174,7 +110,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             {(schoolName || 'Gurukul').charAt(0)}
           </Avatar>
           {!collapsed && (
-            <div className="gk-brand-copy">
+            <div className="gk-brand-copy" title={schoolName||'Gurukul'}>
               <Text strong ellipsis>{schoolName || 'Gurukul'}</Text>
               <Text type="secondary" ellipsis>{academicYear || 'School administration'}</Text>
             </div>
@@ -184,7 +120,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         <Menu
           mode="inline"
           items={hasRole('schooladmin','superadmin')?MENU:[{key:'/dashboard',icon:<DashboardOutlined/>,label:'My workspace'},...(hasRole('teacher')?[{key:'/attendance',icon:<CheckSquareOutlined/>,label:'My class attendance'},{key:'/homework',icon:<FileTextOutlined/>,label:'My homework'},{key:'/lesson-plans',icon:<FileTextOutlined/>,label:'My lesson plans'},{key:'/exams',icon:<BookOutlined/>,label:'My assigned exams'},{key:'/quizzes',icon:<QuestionCircleOutlined/>,label:'My quizzes'},{key:'/live-classes',icon:<VideoCameraOutlined/>,label:'My live classes'}]:[]),...(hasRole('teacher','staff','nonteaching')?[{key:'/leaves',icon:<CalendarOutlined/>,label:'My leave'},{key:'/payroll',icon:<WalletOutlined/>,label:'My payslips'}]:[]),...(hasRole('student')?[{key:'/student-portal',icon:<BookOutlined/>,label:'My learning'}]:[]),...(hasRole('parent')?[{key:'/parent-portal',icon:<BookOutlined/>,label:'My children’s learning'}]:[]),{key:'/profile',icon:<UserOutlined/>,label:'My profile'}]}
-          selectedKeys={[location.pathname]}
+          selectedKeys={[rootPath]}
           openKeys={collapsed ? [] : openKeys}
           onOpenChange={(keys) => {
             const latest = keys.find((key) => !openKeys.includes(key));
@@ -192,12 +128,12 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           }}
           defaultOpenKeys={['people']}
           onClick={({ key }) => {
-            if (key.startsWith('/')) navigate(key);
+            if (key.startsWith('/')){navigateSafely(key);if(window.matchMedia('(max-width: 991px)').matches)setCollapsed(true);}
           }}
           style={{ borderInlineEnd: 'none' }}
         />
       </Sider>
-
+      {!collapsed&&<button className="gk-nav-backdrop" aria-label="Close navigation" onClick={()=>setCollapsed(true)}/>}
       <Layout>
         <Header
           className="gk-header"
@@ -210,29 +146,30 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               onClick={() => setCollapsed((c) => !c)}
               aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
             />
-            <Input
+            {hasRole('schooladmin','superadmin')&&<Input
+              aria-label="Search students"
               className="gk-global-search"
               prefix={<SearchOutlined />}
-              placeholder="Search students, teachers, classes…"
+              placeholder="Search students by name or admission…"
               onPressEnter={(e) => {
                 const q = (e.target as HTMLInputElement).value.trim();
-                if (q) navigate(`/students?q=${encodeURIComponent(q)}`);
+                if (q) navigateSafely(`/students?q=${encodeURIComponent(q)}`);
               }}
-            />
+            />}
           </Space>
 
           <Space size="middle">
             <ThemeSwitcher compact />
-            <Badge dot>
-              <Button type="text" shape="circle" icon={<NotificationOutlined />} onClick={() => navigate('/notices')} aria-label="Notifications" />
-            </Badge>
+
+              <Button type="text" shape="circle" icon={<NotificationOutlined />} onClick={() => navigateSafely('/notices')} aria-label="Notifications" />
+
             {schoolCode && <Tag color="blue">{schoolCode}</Tag>}
             <Dropdown menu={{ items: userMenu }} placement="bottomRight" trigger={['click']}>
               <Button type="text" className="gk-profile-button">
                 <Avatar icon={<UserOutlined />} />
                 <span className="gk-profile-copy">
                   <Text strong>{user?.name}</Text>
-                  <Text type="secondary">{user?.designation || user?.roles?.[0] || 'School admin'}</Text>
+                  <Text type="secondary">{humanize(user?.designation || user?.roles?.[0] || 'schooladmin')}</Text>
                 </span>
               </Button>
             </Dropdown>
@@ -240,7 +177,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           </div>
         </Header>
 
-        <Content className="gk-content">{children}</Content>
+        <Content className="gk-content" id="portal-main" tabIndex={-1}><Breadcrumb className="gk-breadcrumb" items={[{title:<span>{activeSection?.label||'School'}</span>},{title:currentPage},...(location.pathname!==rootPath?[{title:'Record details'}]:[])]}/>{children}</Content>
       </Layout>
     </Layout>
   );

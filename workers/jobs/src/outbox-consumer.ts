@@ -5,14 +5,17 @@ interface Event {id:string;school_id:string;event_type:string;payload_json:strin
 export async function processOutboxBatch(env:OutboxConsumerEnv,batchLimit=1):Promise<OutboxConsumerStats>{
   const stats:OutboxConsumerStats={processed:0,succeeded:0,failed:0,deadLettered:0,prunedTokens:0};
   if(!env.DB)throw new Error('DATABASE_UNAVAILABLE');
+  // Missing provider configuration is operational, not a poison message.
+  // Leave all pending rows untouched until delivery has been configured.
+  if(!env.FIREBASE_SERVICE_ACCOUNT_JSON)return stats;
   const now=Math.floor(Date.now()/1000),lease=crypto.randomUUID();
   // A sending row whose lease expired has an uncertain provider outcome. Do not resend blindly.
   await env.DB.batch([
-    env.DB.prepare(`UPDATE delivery_outcomes SET status='unknown',last_error='PROVIDER_ACCEPTANCE_UNKNOWN',updated_at=? WHERE status='sending' AND event_id IN(SELECT id FROM outbox WHERE status='processing' AND lease_until<=?)`).bind(now,now),
-    env.DB.prepare(`UPDATE outbox SET status='dead_letter',last_error='PROVIDER_ACCEPTANCE_UNKNOWN',lease_id=NULL,lease_until=NULL WHERE status='processing' AND lease_until<=? AND EXISTS(SELECT 1 FROM delivery_outcomes d WHERE d.event_id=outbox.id AND d.status='unknown')`).bind(now),
-    env.DB.prepare(`UPDATE outbox SET status='pending',lease_id=NULL,lease_until=NULL WHERE status='processing' AND lease_until<=?`).bind(now),
+    env.DB.prepare(`UPDATE delivery_outcomes SET status='unknown',last_error='PROVIDER_ACCEPTANCE_UNKNOWN',updated_at=? WHERE status='sending' AND event_id IN(SELECT id FROM outbox WHERE event_type='push_notification' AND status='processing' AND lease_until<=?)`).bind(now,now),
+    env.DB.prepare(`UPDATE outbox SET status='dead_letter',last_error='PROVIDER_ACCEPTANCE_UNKNOWN',lease_id=NULL,lease_until=NULL WHERE event_type='push_notification' AND status='processing' AND lease_until<=? AND EXISTS(SELECT 1 FROM delivery_outcomes d WHERE d.event_id=outbox.id AND d.status='unknown')`).bind(now),
+    env.DB.prepare(`UPDATE outbox SET status='pending',lease_id=NULL,lease_until=NULL WHERE event_type='push_notification' AND status='processing' AND lease_until<=?`).bind(now),
   ]);
-  const claimed=await env.DB.prepare(`UPDATE outbox SET status='processing',lease_id=?,lease_until=? WHERE id IN(SELECT id FROM outbox WHERE status='pending' AND scheduled_at<=? ORDER BY scheduled_at,id LIMIT ?) RETURNING id,school_id,event_type,payload_json,attempts`).bind(lease,now+300,now,Math.min(1,Math.max(1,batchLimit))).all<Event>();
+  const claimed=await env.DB.prepare(`UPDATE outbox SET status='processing',lease_id=?,lease_until=? WHERE id IN(SELECT id FROM outbox WHERE event_type='push_notification' AND status='pending' AND scheduled_at<=? ORDER BY scheduled_at,id LIMIT ?) RETURNING id,school_id,event_type,payload_json,attempts`).bind(lease,now+300,now,Math.min(1,Math.max(1,batchLimit))).all<Event>();
   for(const event of claimed.results){
     stats.processed++;
     let fatal=false,error='DELIVERY_FAILED',complete=false;

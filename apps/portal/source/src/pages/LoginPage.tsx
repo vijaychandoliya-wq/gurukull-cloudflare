@@ -42,8 +42,10 @@ export const LoginPage: React.FC = () => {
       const status = err?.response?.status;
       if (status === 404) setError('That school code was not recognised. Check the code and try again.');
       else if (err?.response?.data?.error === 'SCHOOL_CONFIGURATION_NEEDED') setError('This school is reserved. Its administrator and school settings must be configured before sign-in.');
-      else if (['FREE_AUTH_CPU_VERIFICATION_REQUIRED', 'ADMIN_ACCESS_CPU_VERIFICATION_REQUIRED'].includes(err?.response?.data?.error)) setError('Sign-in is awaiting the secure login performance check. Please contact the platform administrator.');
-      else setError(err?.response?.data?.message || 'Unable to sign in. Please try again.');
+      else if (['FREE_AUTH_CPU_VERIFICATION_REQUIRED', 'ADMIN_ACCESS_CPU_VERIFICATION_REQUIRED'].includes(err?.response?.data?.error)) setError('This account still uses an older password that is not enabled on the current login service. Ask your school administrator to open Roles and account access, choose Generate password, and sign in with the new password.');
+      else if(status===401||status===403)setError('We couldn’t sign you in. Check your school code and login details, or contact your school administrator.');
+      else if(!err?.response)setError('The sign-in service could not be reached. Check your connection and try again.');
+      else setError('Sign-in is temporarily unavailable. Please try again or contact your school administrator.');
     } finally {
       setSubmitting(false);
     }
@@ -90,11 +92,8 @@ export const LoginPage: React.FC = () => {
             <Title level={2}>Welcome back</Title>
             <Text type="secondary">Sign in once to continue to your role-based Gurukul portal.</Text>
           </div>
-          <Flex wrap="wrap" gap={6} className="gk-auth-role-list">
-            {['School admin', 'Teacher', 'Student', 'Parent', 'Staff'].map((role) => <Tag key={role}>{role}</Tag>)}
-          </Flex>
           {error && <Alert type="error" showIcon message={error} className="gk-login-alert" />}
-          <Form<LoginValues> layout="vertical" onFinish={onFinish} requiredMark={false} className="gk-login-form">
+          {new URLSearchParams(window.location.search).get('passwordChanged')==='1'&&<Alert type="success" showIcon message="Password changed. Sign in with your new password."/>}<Form<LoginValues> layout="vertical" onFinish={onFinish} requiredMark={false} className="gk-login-form">
             <Form.Item name="schoolCode" label="School code" rules={[{ required: true, message: 'Enter your school code' }]}>
               <Input size="large" prefix={<BankOutlined />} placeholder="e.g. 108" autoComplete="organization" autoCapitalize="characters" />
             </Form.Item>
