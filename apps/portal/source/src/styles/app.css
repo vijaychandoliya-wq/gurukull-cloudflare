@@ -210,8 +210,8 @@ html[dir='rtl'] .gk-login-appearance { left: 28px; right: auto; }
     .gk-login-page { display: block; min-height: 100vh; }
     .gk-login-brand-panel { display: none; }
     .gk-login-form-panel { min-height: 100vh; padding: 28px 20px 24px; justify-content: flex-start; }
-    .gk-login-appearance { top: 18px; right: 18px; }
-    .gk-login-mobile-brand { width: 100%; min-width: 0; max-width: 100%; margin-bottom: 52px; display: block; }
+    .gk-login-appearance { position: static; align-self: flex-end; margin-bottom: 24px; }
+    .gk-login-mobile-brand { width: 100%; min-width: 0; max-width: 100%; margin-bottom: 32px; display: block; }
     .gk-login-card { width: 100%; }
     .gk-login-field > .ant-flex { flex-wrap: wrap; }
     .gk-login-footer { width: 100%; max-width: 100%; overflow-wrap: anywhere; }

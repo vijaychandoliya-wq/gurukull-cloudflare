@@ -56,7 +56,7 @@ export const LoginPage: React.FC = () => {
 
   return (
     <main className="gk-login-page">
-      <section className="gk-login-brand-panel" aria-label="Gurukul school platform">
+      <section className="gk-login-brand-panel" aria-label="Gurukul school platform" lang="en" dir="ltr">
         <div className="gk-login-orb gk-login-orb-one" />
         <div className="gk-login-orb gk-login-orb-two" />
         <Flex vertical justify="space-between" className="gk-login-brand-content">
@@ -84,13 +84,13 @@ export const LoginPage: React.FC = () => {
       <section className="gk-login-form-panel">
         <div className="gk-login-appearance"><Space size={8}><LanguageSwitcher/><ThemeSwitcher /></Space></div>
         <div className="gk-login-mobile-brand">
-          <Link to="/login" className="gk-login-wordmark gk-login-wordmark-mobile" aria-label="Gurukul home">
+          <Link to="/login" className="gk-login-wordmark gk-login-wordmark-mobile" aria-label="Gurukul home" lang="en" dir="ltr">
             <span className="gk-login-mark">GK</span>
             <span><strong>Gurukul</strong><small>School operating system</small></span>
           </Link>
         </div>
         <Card className="gk-login-card" bordered={false}>
-          <Link to="/enroll" className="gk-login-back"><ArrowLeftOutlined /> Have an administrator invitation?</Link>
+          <Link to="/enroll" className="gk-login-back" lang="en" dir="ltr"><ArrowLeftOutlined /> Have an administrator invitation?</Link>
           <div className="gk-login-heading">
             <Title level={2}>{t('welcomeBack')}</Title>
             <Text type="secondary">{t('signInSubtitle')}</Text>
@@ -98,23 +98,23 @@ export const LoginPage: React.FC = () => {
           {error && <Alert type="error" showIcon message={error} className="gk-login-alert" />}
           {new URLSearchParams(window.location.search).get('passwordChanged')==='1'&&<Alert type="success" showIcon message="Password changed. Sign in with your new password."/>}<Form<LoginValues> layout="vertical" onFinish={onFinish} requiredMark={false} className="gk-login-form">
             <Form.Item name="schoolCode" label={t('schoolCode')} rules={[{ required: true, message: 'Enter your school code' }]}>
-              <Input size="large" prefix={<BankOutlined />} placeholder="e.g. 108" autoComplete="organization" autoCapitalize="characters" />
+              <Input size="large" dir="ltr" prefix={<BankOutlined />} placeholder="e.g. 108" autoComplete="organization" autoCapitalize="characters" />
             </Form.Item>
             <Form.Item name="identifier" label={t('identifier')} rules={[{ required: true, message: 'Enter your mobile number or email address' }]}>
-              <Input size="large" prefix={<MailOutlined />} placeholder="8056745614 or name@school.com" autoComplete="username" />
+              <Input size="large" dir="ltr" prefix={<MailOutlined />} placeholder="8056745614 or name@school.com" autoComplete="username" />
             </Form.Item>
             <Form.Item name="password" label={t('password')} rules={[{ required: true, message: 'Enter your password or access key' }]}>
-              <Input.Password size="large" prefix={<LockOutlined />} placeholder="Enter your password or access key" autoComplete="current-password" />
+              <Input.Password size="large" dir="auto" prefix={<LockOutlined />} placeholder="Enter your password or access key" autoComplete="current-password" />
             </Form.Item>
             <Button type="primary" size="large" htmlType="submit" block loading={submitting} className="gk-login-submit">{t('signIn')}</Button>
           </Form>
           <Divider />
-          <Flex justify="center" align="center" gap={8} className="gk-login-help">
+          <Flex justify="center" align="center" gap={8} className="gk-login-help" lang="en" dir="ltr">
             <SafetyCertificateOutlined />
             <Text type="secondary">Use the account issued by your school administrator.</Text>
           </Flex>
         </Card>
-        <Text type="secondary" className="gk-login-footer">© {new Date().getFullYear()} Gurukul. School management, thoughtfully connected.</Text>
+        <Text type="secondary" className="gk-login-footer" lang="en" dir="ltr">© {new Date().getFullYear()} Gurukul. School management, thoughtfully connected.</Text>
       </section>
     </main>
   );
