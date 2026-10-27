@@ -79,6 +79,7 @@ html[dir='rtl'] .gk-login-appearance { left: 28px; right: auto; }
 .gk-login-form .ant-form-item-explain-error { margin-top: 6px; font-size: 12px; }
 .gk-login-form .ant-form-item-control-input-content > .ant-input { min-height: 48px; }
 .gk-login-form .ant-form-item-control-input-content > .ant-input-affix-wrapper { width: 100%; }
+.gk-login-form input[dir='ltr'] { direction: ltr; text-align: start; unicode-bidi: plaintext; }
 .gk-dashboard-list .ant-list-item { gap: 16px; }
 .gk-admission-page { min-height: 100vh; color: #172033; background: linear-gradient(180deg, #eef4ff 0, #f7f9fc 300px, #f7f9fc 100%); }
 .gk-admission-header { position: sticky; top: 0; z-index: 10; padding: 14px clamp(18px, 5vw, 64px); background: rgba(255,255,255,.94); border-bottom: 1px solid #e6eaf0; backdrop-filter: blur(12px); }
