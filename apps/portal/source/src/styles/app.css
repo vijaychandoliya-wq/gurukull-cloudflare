@@ -215,10 +215,10 @@ html[dir='rtl'] .gk-login-appearance { left: 28px; right: auto; }
     .gk-login-card { width: 100%; }
     .gk-login-field > .ant-flex { flex-wrap: wrap; }
     .gk-login-footer { width: 100%; max-width: 100%; overflow-wrap: anywhere; }
-    .gk-login-wordmark-mobile { color: #172033; }
-    .gk-login-wordmark-mobile:hover { color: #172033; }
+    .gk-login-wordmark-mobile { color: var(--gk-text-primary); }
+    .gk-login-wordmark-mobile:hover { color: var(--gk-text-primary); }
     .gk-login-wordmark-mobile .gk-login-mark { color: #fff; background: #2563eb; }
-    .gk-login-wordmark-mobile small { color: #667085; }
+    .gk-login-wordmark-mobile small { color: var(--gk-text-secondary); }
     .gk-login-back { margin-bottom: 34px; }
     .gk-login-heading h2.ant-typography { font-size: 30px; }
     .gk-login-footer { margin-top: auto; padding-top: 32px; }
