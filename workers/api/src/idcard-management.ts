@@ -80,6 +80,7 @@ export function registerIdCardManagement(app: Hono<AppEnv>) {
     const sql = `
       SELECT
         s.id,
+        u.id AS userId,
         u.full_name AS fullName,
         s.admission_no AS registrationNumber,
         s.roll_no AS rollNumber,
@@ -87,6 +88,7 @@ export function registerIdCardManagement(app: Hono<AppEnv>) {
         p.dob AS dateOfBirth,
         p.blood_group AS bloodGroup,
         p.address,
+        p.avatar_r2_key AS avatarKey,
         u.mobile AS contactNumber, NULL AS guardianContact
       FROM students s
       JOIN users u ON u.id = s.user_id AND u.school_id = s.school_id
@@ -111,7 +113,7 @@ export function registerIdCardManagement(app: Hono<AppEnv>) {
       return {
         id: row.id,
         fullName: row.fullName,
-        avatar: null,
+        avatar: row.avatarKey ? `/api/admin/students/${row.userId}/avatar` : null,
         className: row.className || null,
         rollNumber: row.rollNumber || null,
         registrationNumber: row.registrationNumber || null,
@@ -145,12 +147,14 @@ export function registerIdCardManagement(app: Hono<AppEnv>) {
     const sql = `
       SELECT
         t.id,
+        u.id AS userId,
         u.full_name AS fullName,
         t.employee_code AS registrationNumber,
         t.designation AS className,
         p.dob AS dateOfBirth,
         p.blood_group AS bloodGroup,
         p.address,
+        p.avatar_r2_key AS avatarKey,
         u.mobile AS contactNumber, NULL AS guardianContact
       FROM teachers t
       JOIN users u ON u.id = t.user_id AND u.school_id = t.school_id
@@ -166,7 +170,7 @@ export function registerIdCardManagement(app: Hono<AppEnv>) {
     const teachers = (res.results || []).map((row: any) => ({
       id: row.id,
       fullName: row.fullName,
-      avatar: null,
+      avatar: row.avatarKey ? `/api/admin/teachers/${row.userId}/avatar` : null,
       className: row.className || null,
       rollNumber: null,
       registrationNumber: row.registrationNumber || null,
@@ -192,6 +196,7 @@ export function registerIdCardManagement(app: Hono<AppEnv>) {
         u.full_name AS fullName,
         sp.designation AS className,sp.employee_code AS registrationNumber,p.dob AS dateOfBirth,
         u.mobile AS contactNumber, NULL AS guardianContact,
+        p.avatar_r2_key AS avatarKey,
         p.blood_group AS bloodGroup,
         p.address
       FROM users u
@@ -208,7 +213,7 @@ export function registerIdCardManagement(app: Hono<AppEnv>) {
     const staffList = (res.results || []).map((row: any) => ({
       id: row.id,
       fullName: row.fullName,
-      avatar: null,
+      avatar: row.avatarKey ? `/api/admin/staff/${row.id}/avatar` : null,
       className: row.className || null,
       rollNumber: null,
       registrationNumber: row.registrationNumber || null,

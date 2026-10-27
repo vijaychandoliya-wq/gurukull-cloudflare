@@ -2,9 +2,11 @@ import type { Context, MiddlewareHandler } from 'hono';
 import { digest, fail, verifyJwt, type Claims } from './security.js';
 import { setupRequestAllowed } from './admin-access.js';
 
-export interface Env {
+export interface Env extends Partial<ApiBindings> {
   APP_RELEASE?: string;
-  DB: D1Database; R2_MEDIA: R2Bucket; KV_SESSIONS?: KVNamespace; EMAIL?: SendEmail; EMAIL_FROM?: string;
+  SOURCE_SHA?: string;
+  EMAIL_DELIVERY_ENABLED?: string;
+  DB: ApiBindings['DB']; R2_MEDIA: ApiBindings['R2_MEDIA']; EMAIL_OUTBOX_SECRET?: string;
   JWT_SECRET?: string; ENVIRONMENT?: string; AUTH_CPU_VERIFIED?: string; ENROLLMENT_CPU_VERIFIED?: string;
   ALLOWED_ORIGINS?: string; TRUSTED_SHARED_HOSTS?: string;
   SCHOOL_ACTIVATION_VERIFIED?: string;
@@ -20,6 +22,7 @@ export interface Env {
   // the administrator. Legacy/imported bcrypt hashes remain behind the
   // measured AUTH_CPU_VERIFIED gate.
   GENERATED_PASSWORD_AUTH_ENABLED?: string;
+  SELF_SERVICE_PASSWORD_ENABLED?: string;
   WHATSAPP_GRAPH_API_URL?: string;
   WHATSAPP_PHONE_NUMBER_ID?: string;
   WHATSAPP_PASSWORD_TEMPLATE?: string;

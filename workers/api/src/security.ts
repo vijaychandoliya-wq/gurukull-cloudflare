@@ -66,7 +66,14 @@ export async function generatedPasswordDigest(password:string,secret:string,scho
   if(new TextEncoder().encode(secret).length<32)fail(503,'GENERATED_PASSWORD_NOT_CONFIGURED');
   return encode(new Uint8Array(await crypto.subtle.sign('HMAC',await hmacKey(secret),generatedPasswordMessage(password,schoolId,userId))));
 }
+// User-selected passwords require an adaptive salted hash. The scoped HMAC
+// prehash avoids bcrypt's 72-byte truncation for long or Unicode passwords.
+export const USER_PASSWORD_PREFIX='bcrypt-v1:';
+export async function createUserPasswordHash(password:string,secret:string,schoolId:string,userId:string):Promise<string>{
+ return USER_PASSWORD_PREFIX+await bcrypt.hash(await generatedPasswordDigest(password,secret,schoolId,userId),12);
+}
 export async function verifyGeneratedPassword(password:string,hash:string,secret:string,schoolId:string,userId:string):Promise<boolean>{
+  if(hash.startsWith(USER_PASSWORD_PREFIX)){const stored=hash.slice(USER_PASSWORD_PREFIX.length);if(!/^\$2[aby]\$12\$[./A-Za-z0-9]{53}$/.test(stored))return false;return bcrypt.compare(await generatedPasswordDigest(password,secret,schoolId,userId),stored);}
   if(!/^[A-Za-z0-9_-]{43}$/.test(hash))return false;
   if(new TextEncoder().encode(secret).length<32)fail(503,'GENERATED_PASSWORD_NOT_CONFIGURED');
   try{return await crypto.subtle.verify('HMAC',await hmacKey(secret),decode(hash),generatedPasswordMessage(password,schoolId,userId));}catch{return false;}

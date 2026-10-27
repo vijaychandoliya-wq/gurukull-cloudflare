@@ -13,7 +13,7 @@ export const SyncCommandSchema = z.object({
   kind: SyncCommandKindEnum,
   entity_id: z.string().optional(),
   base_version: z.number().int().nonnegative().optional(),
-  payload: z.record(z.any()),
+  payload: z.record(z.string(),z.any()),
   payload_hash: z.string().min(16),
 });
 
@@ -54,7 +54,7 @@ export const DeviceRegisterRequestSchema = z.object({
   platform: z.enum(['android', 'ios', 'web']),
   app_version: z.string().min(1),
   fcm_token: z.string().min(10),
-  preferences: z.record(z.any()).optional(),
+  preferences: z.record(z.string(),z.any()).optional(),
 });
 
 export type DeviceRegisterRequest = z.infer<typeof DeviceRegisterRequestSchema>;

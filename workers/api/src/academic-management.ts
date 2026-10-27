@@ -16,10 +16,11 @@ async function options(c:ApiContext){
   db(c).prepare('SELECT s.id AS value,c.name||\' - \'||s.name AS label FROM sections s JOIN classes c ON c.id=s.class_id AND c.school_id=s.school_id WHERE s.school_id=? ORDER BY c.sort_order,s.sort_order,c.name,s.name').bind(u.school_id),
   db(c).prepare('SELECT sub.id AS value,sub.name||\' (\'||c.name||\' - \'||s.name||\')\' AS label,sub.section_id AS sectionId FROM subjects sub JOIN academic_years a ON a.id=sub.academic_year_id AND a.school_id=sub.school_id AND a.is_current=1 JOIN sections s ON s.id=sub.section_id AND s.school_id=sub.school_id JOIN classes c ON c.id=s.class_id AND c.school_id=s.school_id WHERE sub.school_id=? ORDER BY sub.name').bind(u.school_id),
   db(c).prepare("SELECT id AS value,full_name AS label FROM users WHERE school_id=? AND user_type='teacher' AND status='active' ORDER BY full_name").bind(u.school_id),
-  db(c).prepare('SELECT days_json,periods_per_day,version FROM timetable_configuration WHERE school_id=?').bind(u.school_id)
+  db(c).prepare('SELECT days_json,periods_per_day,version FROM timetable_configuration WHERE school_id=?').bind(u.school_id),
+  db(c).prepare("SELECT a.section_id AS sectionId,a.subject_id AS subjectId,a.teacher_user_id AS teacherId,a.planned_periods AS plannedPeriods FROM teacher_assignments a JOIN academic_years y ON y.id=a.academic_year_id AND y.school_id=a.school_id AND y.is_current=1 JOIN users u ON u.id=a.teacher_user_id AND u.school_id=a.school_id AND u.user_type='teacher' AND u.status='active' WHERE a.school_id=? AND a.subject_id IS NOT NULL ORDER BY a.section_id,a.subject_id,u.full_name").bind(u.school_id)
  ]);
  const cfg=r[3].results[0] as {days_json:string;periods_per_day:number;version:number}|undefined;
- return {classes:r[0].results,subjects:r[1].results,teachers:r[2].results,days:cfg?JSON.parse(cfg.days_json):[],periods:cfg?Array.from({length:cfg.periods_per_day},(_,i)=>i+1):[],configuration:cfg?{days:JSON.parse(cfg.days_json),periodsPerDay:cfg.periods_per_day,version:cfg.version}:null};
+ return {classes:r[0].results,subjects:r[1].results,teachers:r[2].results,assignments:r[4].results,days:cfg?JSON.parse(cfg.days_json):[],periods:cfg?Array.from({length:cfg.periods_per_day},(_,i)=>i+1):[],configuration:cfg?{days:JSON.parse(cfg.days_json),periodsPerDay:cfg.periods_per_day,version:cfg.version}:null};
 }
 async function saveSubject(c:ApiContext){
  const u=requireRole(c,'admin'),input=parse(subjectInput,await readBody(c)),{yearId}=await managementReady(c),editing=!!c.req.param('id'),id=c.req.param('id')||crypto.randomUUID(),g=crypto.randomUUID();
@@ -59,6 +60,13 @@ async function saveSlot(c:ApiContext,restore=false){
  const v=parse(timetableInput,restore?{standardLinkId:original!.section_id,subjectId:original!.subject_id,teacherId:original!.teacher_user_id,day:original!.day,periodNo:original!.period_no,roomNo:original!.room_no,startTime:original!.start_time,endTime:original!.end_time}:body);
  if(editing&&!v.version)fail(422,'VERSION_REQUIRED');
  const sub=await db(c).prepare('SELECT sub.name,s.class_id FROM subjects sub JOIN sections s ON s.id=sub.section_id AND s.school_id=sub.school_id WHERE sub.school_id=? AND sub.id=? AND sub.section_id=? AND sub.academic_year_id=?').bind(u.school_id,v.subjectId,v.standardLinkId,yearId).first<{name:string;class_id:string}>();if(!sub)fail(422,'INVALID_SUBJECT');
+ const assignment=await db(c).prepare(`SELECT a.planned_periods AS plannedPeriods,COUNT(t.id) AS scheduledPeriods
+   FROM teacher_assignments a LEFT JOIN timetables t ON t.school_id=a.school_id AND t.academic_year_id=a.academic_year_id
+     AND t.section_id=a.section_id AND t.teacher_user_id=a.teacher_user_id AND t.subject_id=a.subject_id AND t.id!=?
+   WHERE a.school_id=? AND a.academic_year_id=? AND a.section_id=? AND a.teacher_user_id=? AND a.subject_id=?
+   GROUP BY a.id,a.planned_periods`).bind(id,u.school_id,yearId,v.standardLinkId,v.teacherId,v.subjectId).first<{plannedPeriods:number;scheduledPeriods:number}>();
+ if(!assignment)fail(422,'TEACHER_ASSIGNMENT_REQUIRED','Assign this teacher to this subject in Subjects & Catalog before adding it to the timetable.');
+ if(assignment.scheduledPeriods>=assignment.plannedPeriods)fail(409,'ASSIGNMENT_PERIOD_LIMIT','This teacher assignment has reached its planned weekly periods. Increase the assignment or choose another assigned subject.');
  const result=await command(c,'timetable.'+(restore?'restore':editing?'update':'create'),restore?{id,version}:{...v,id:editing?id:null},()=>{
   const writes=slotGuards(c,v,yearId,id,g);
   if(editing)writes.push(guard(c,'EXISTS(SELECT 1 FROM timetables WHERE school_id=? AND id=? AND academic_year_id=? AND version=?)',[u.school_id,id,yearId,v.version],g+'-record'));

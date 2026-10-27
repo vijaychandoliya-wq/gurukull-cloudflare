@@ -6,3 +6,13 @@ dist/
 .wrangler/
 *.log
 .DS_Store
+
+.env
+.env.*
+!.env.example
+.dev.vars*
+*.jks
+*.pem
+.scannerwork/
+.sonar/
+recovery-bookmark.json

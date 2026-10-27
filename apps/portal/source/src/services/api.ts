@@ -87,6 +87,8 @@ export const API = {
   profileApi: '/api/admin/profile',
   profileAvatarApi: '/api/admin/profile/avatar',
   profilePasswordApi: '/api/admin/profile/password',
+  localePreferenceApi: '/api/portal/locale-preference',
+  localeSettingsApi: '/api/admin/locale-settings',
   teacherStatusApi: '/api/admin/teachers/__ID__/status',
   teacherPasswordApi: '/api/admin/teachers/__ID__/password',
   teacherAssignmentsApi: '/api/admin/teachers/__ID__/assignments',

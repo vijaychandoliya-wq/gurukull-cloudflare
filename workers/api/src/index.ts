@@ -1,3 +1,4 @@
+import {registerPasswordManagement} from './password-management.js';
 import {registerPayrollManagement} from './payroll-management.js';
 import {registerLiveClassManagement} from './live-class-management.js';
 import {registerQuizManagement} from './quiz-management.js';
@@ -17,12 +18,15 @@ import {registerNoticeManagement,memberNotices} from './notice-management.js';
 import {registerAcademicWork} from './academic-work.js';
 import {registerAcademicManagement} from './academic-management.js';
 import {registerProfileManagement} from './profile-management.js';
+import {registerLocalePreferences} from './locale-preferences.js';
 import {registerMemberWorkspace} from './member-workspace.js';
 import {registerMemberAccess} from './member-access.js';
 import {registerPeopleManagement} from './people-management.js';
 import {registerSchoolManagement} from './school-management.js';
 import {registerFeeManagement} from './fee-management.js';
+import {registerFeeParityManagement} from './fee-parity-management.js';
 import {registerIdCardManagement} from './idcard-management.js';
+import {registerEmailDeliveryStatus, scheduledEmailDispatcher} from './email-delivery.js';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { DeviceRegisterRequestSchema } from '@gurukul/domain';
@@ -31,6 +35,7 @@ import { login, logout } from './auth.js';
 import { fail, money } from './security.js';
 import { registerSync } from './sync.js';
 import { registerStorage } from './storage/routes.js';
+import { registerAvatarManagement } from './avatar-management.js';
 import { registerAttendance } from './attendance.js';
 import { registerEnrollment } from './enrollment.js';
 import { registerAdmin } from './admin.js';
@@ -45,8 +50,7 @@ app.use('*',async(c,next)=>{
   const origin=c.req.header('origin');
   const allowed=(c.env?.ALLOWED_ORIGINS||'https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in').split(',');
   if (origin) {
-    const tenantOrigin = origin === 'https://smvdic.gurukull.in';
-    if (!allowed.includes(origin) && !tenantOrigin) fail(403,'ORIGIN_FORBIDDEN');
+    if (!allowed.includes(origin)) fail(403,'ORIGIN_FORBIDDEN');
     c.header('Access-Control-Allow-Origin',origin);c.header('Vary','Origin');
     c.header('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE,OPTIONS');
     c.header('Access-Control-Allow-Headers','Content-Type,Authorization,x-school-code,x-request-id,x-file-name,x-access-scope,x-entity-id,x-entity-type,Idempotency-Key');
@@ -55,7 +59,20 @@ app.use('*',async(c,next)=>{
   if(c.req.method==='OPTIONS')return c.body(null,204);
   await next();
 });
-app.get('/health',c=>c.json({status:'healthy',runtime:'cloudflare-workers',release:c.env?.APP_RELEASE||'unversioned',requestId:c.get('requestId')}));
+app.get('/health',c=>c.json({status:'healthy',runtime:'cloudflare-workers',release:c.env?.APP_RELEASE||'unversioned',sourceSha:c.env?.SOURCE_SHA||'local',requestId:c.get('requestId')}));
+app.get('/api/platform/readiness',requireAuth,async c=>{
+  requireRole(c,'superadmin');
+  const operator=await db(c).prepare('SELECT 1 FROM platform_operators WHERE user_id=? AND revoked_at IS NULL').bind(c.get('user').id).first();
+  if(!operator)fail(403,'PLATFORM_PERMISSION_REQUIRED');
+  try{
+    await db(c).prepare('SELECT generated_password_hash FROM users LIMIT 0').all();
+    await db(c).prepare('SELECT provider_message_id FROM outbox LIMIT 0').all();
+    await db(c).prepare('SELECT * FROM fee_invoice_balances LIMIT 0').all();
+    await c.env.R2_MEDIA.head('__readiness__');
+    const backlog=await db(c).prepare("SELECT COUNT(*) AS pending,MIN(created_at) AS oldest FROM outbox WHERE status='pending'").first();
+    return c.json({status:'ready',release:c.env.APP_RELEASE,sourceSha:c.env.SOURCE_SHA,backlog});
+  }catch{return c.json({status:'not_ready',requestId:c.get('requestId')},503);}
+});
 app.get('/api/v3/discovery/:schoolCode',async c=>{
   const school=await schoolByCode(c,c.req.param('schoolCode').toUpperCase());
   return c.json({code:school.code,name:school.name,status:school.status,setupPolicy:school.status==='active'?'configured':'administrator_pending',logo:null});
@@ -79,6 +96,7 @@ app.on('GET',['/api/teacher/school/details','/api/v2/school/details','/v2/school
   return c.json({status:'success',data:{id:s.id,name:s.name,code:s.code,status:s.status,configuration:config}});
 });
 registerPlatform(app);
+registerPasswordManagement(app);
 app.post('/api/v3/devices/register',requireAuth,async c=>{
   const u=c.get('user'),parsed=DeviceRegisterRequestSchema.safeParse(await readBody(c));if(!parsed.success)fail(422,'INVALID_DEVICE');
   const d=parsed.data,now=Math.floor(Date.now()/1000);
@@ -113,7 +131,8 @@ const fees=async(c:ApiContext)=>{
 app.on('GET',['/api/v2/fees/:studentId','/api/v2/fees/paid/:studentId','/api/v2/fees/unpaid/:studentId','/v2/fees/paid/:studentId','/v2/fees/unpaid/:studentId'],requireAuth,fees);
 app.on('GET',['/api/v2/notices','/api/v2/my-school/notices','/v2/my-school/notices','/api/teacher/my-school/notices','/api/portal/notices'],requireAuth,c=>{if(c.req.path.includes('/teacher/'))requireRole(c,'teacher','admin');return memberNotices(c);});
 registerPayrollManagement(app);registerLiveClassManagement(app);registerQuizManagement(app);registerTransportManagement(app);registerStudentLifecycle(app);registerCertificateManagement(app);registerLibraryManagement(app);registerDisciplineManagement(app);registerExamManagement(app);registerInventoryManagement(app);registerReceptionManagement(app);registerLeaveManagement(app);registerStudentWorkspace(app);registerPortalAttendance(app);registerParentManagement(app);registerNoticeManagement(app);registerAcademicWork(app);
-registerAcademicManagement(app);registerProfileManagement(app);registerMemberWorkspace(app);registerMemberAccess(app);registerPeopleManagement(app);registerSchoolManagement(app);registerAdmin(app);registerEnrollment(app);registerAttendance(app);registerSync(app);registerStorage(app);registerFeeManagement(app);registerIdCardManagement(app);
+registerAcademicManagement(app);registerProfileManagement(app);registerLocalePreferences(app);registerMemberWorkspace(app);registerMemberAccess(app);registerPeopleManagement(app);registerAvatarManagement(app);registerSchoolManagement(app);registerAdmin(app);registerEnrollment(app);registerAttendance(app);registerSync(app);registerStorage(app);registerFeeManagement(app);registerFeeParityManagement(app);registerIdCardManagement(app);
+registerEmailDeliveryStatus(app);
 app.notFound(async (c) => {
   const assets = (c.env as any)?.ASSETS;
   if (assets && !c.req.path.startsWith('/api/') && !c.req.path.startsWith('/v2/')) {
@@ -129,4 +148,5 @@ app.onError((err,c)=>{
   console.error(JSON.stringify({event:'api_failure',requestId:c.get('requestId'),category:'DATABASE_OR_RUNTIME_FAILURE'}));
   return c.json({error:'SERVICE_UNAVAILABLE',requestId:c.get('requestId')},503);
 });
-export default app;
+// Keep Hono as the fetch handler and add the scheduled outbox drain for Workers.
+export default Object.assign(app, {scheduled: scheduledEmailDispatcher});

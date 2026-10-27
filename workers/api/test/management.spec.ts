@@ -18,6 +18,11 @@ describe('Management and member credential boundaries',()=>{
   expect(teacherInput.safeParse({...boundary,mobile:''}).success).toBe(false);
   expect(staffInput.safeParse({name:'Scalar',employeeId:'SCALAR',joiningDate:'2026-01-01',designation:'staff'}).success).toBe(false);
  });
+ it('allows the server to generate employee IDs when the form leaves them blank',()=>{
+  const boundary={name:'Generated employee',employeeId:'',joiningDate:'2026-01-01',designation:'assistant_teacher',jobType:'full_time',email:'generated@example.invalid',mobile:'1234567890'};
+  expect(teacherInput.safeParse(boundary).success).toBe(true);
+  expect(staffInput.safeParse({name:'Generated staff',employeeId:'',joiningDate:'2026-01-01',designation:'office',email:'staff@example.invalid'}).success).toBe(true);
+ });
  it('requires real timezone/currency/address and consistent academic dates',()=>{
   expect(configurationInput.safeParse({timezone:'Unknown/Zone',currency:'INR',address:'Scalar boundary'}).success).toBe(false);
   expect(configurationInput.safeParse({timezone:'Asia/Kolkata',currency:'XXX',address:'Scalar boundary'}).success).toBe(false);

@@ -20,14 +20,13 @@ describe('Delivery safety boundaries',()=>{
   const payload=sanitizeLockScreenPayload('Private student name','Student result 85; balance 500; medical record',{screen:'HOME',student_name:'private',balance:'500',event_id:'not-a-uuid'});
   expect(payload.title).toBe('School update');expect(payload.body).toBe('Open Gurukull to view your update.');expect(payload.data).toEqual({screen:'HOME'});
  });
- it('handles an empty claim without provider calls',async()=>{const d=database();expect(await processOutboxBatch(d)).toEqual({processed:0,succeeded:0,failed:0,deadLettered:0,prunedTokens:0});});
+ it('handles an empty claim without provider calls',async()=>{const d=database();expect(await processOutboxBatch({...d,FIREBASE_SERVICE_ACCOUNT_JSON:'{}'})).toEqual({processed:0,succeeded:0,failed:0,deadLettered:0,prunedTokens:0});});
  it('does not complete delivery when credentials are absent',async()=>{
   const d=database({event_type:'push_notification',payload_json:'{}'});const result=await processOutboxBatch(d);
-  expect(result.processed).toBe(1);expect(result.succeeded).toBe(0);expect(result.failed).toBe(1);
-  expect(d.mutations.at(-1)?.values.slice(0,3)).toEqual(['pending',1,'FCM_NOT_CONFIGURED']);
+  expect(result.processed).toBe(0);expect(result.succeeded).toBe(0);expect(result.failed).toBe(0);expect(d.mutations).toEqual([]);
  });
  it('dead letters unsupported events rather than silently completing them',async()=>{
-  const d=database({event_type:'audit_log',payload_json:'{}'});const result=await processOutboxBatch(d);
+  const d=database({event_type:'audit_log',payload_json:'{}'});const result=await processOutboxBatch({...d,FIREBASE_SERVICE_ACCOUNT_JSON:'{}'});
   expect(result.succeeded).toBe(0);expect(result.deadLettered).toBe(1);expect(d.mutations.at(-1)?.values[0]).toBe('dead_letter');
  });
  it('surfaces an unavailable database',async()=>{await expect(processOutboxBatch({} as any)).rejects.toThrow('DATABASE_UNAVAILABLE');});
@@ -40,4 +39,24 @@ describe('Delivery safety boundaries',()=>{
   vi.spyOn(globalThis,'fetch').mockResolvedValue(Response.json({}));
   await expect(sendFcmNotification({project_id:'boundary-project',client_email:'',private_key:''},'nonpersisting-access-token','boundary-token',{title:'private',body:'private'})).rejects.toThrow('PROVIDER_ACCEPTANCE_UNKNOWN');
  });
+});
+
+// SQL predicates are checked against SQLite rather than granting the mock a claim.
+import {spawnSync} from 'node:child_process';
+it('push claim and lease recovery never select credential email rows',async()=>{
+ const queries:string[]=[];const DB:any={batch:async()=>[],prepare:(sql:string)=>{queries.push(sql);const stmt={bind:()=>stmt,all:async()=>({results:[]})};return stmt;}};
+ await processOutboxBatch({DB,FIREBASE_SERVICE_ACCOUNT_JSON:'{}'});
+ for(const query of queries)expect(query).toContain("event_type='push_notification'");
+ const claim=queries.at(-1)!;const result=spawnSync('python3',['-c',`import sqlite3,json,sys
+c=sqlite3.connect(':memory:');c.execute('CREATE TABLE outbox(id TEXT,school_id TEXT,event_type TEXT,payload_json TEXT,attempts INTEGER,status TEXT,lease_id TEXT,lease_until INTEGER,scheduled_at INTEGER)');c.execute("INSERT INTO outbox VALUES('scalar','scalar','email_credentials','{}',0,'pending',NULL,NULL,0)");print(json.dumps(c.execute(sys.argv[1],('lease',400,100,1)).fetchall()))`,claim],{encoding:'utf8'});
+ expect(result.status,result.stderr).toBe(0);expect(JSON.parse(result.stdout)).toEqual([]);
+});
+
+it.each([
+ {key:'{}',payload:'{}',error:'FCM_NOT_CONFIGURED',dead:false},
+ {key:'{',payload:'{}',error:'DELIVERY_FAILED',dead:false},
+ {key:JSON.stringify({project_id:'boundary',client_email:'boundary@example.test',private_key:'nonpersisted-scalar'}),payload:'{}',error:'EXPLICIT_RECIPIENT_REQUIRED',dead:true},
+])('classifies malformed provider/recipient setup without a successful send: $error',async({key,payload,error,dead})=>{
+ const d=database({event_type:'push_notification',payload_json:payload});const result=await processOutboxBatch({...d,FIREBASE_SERVICE_ACCOUNT_JSON:key});
+ expect(result.succeeded).toBe(0);expect(result.failed).toBe(1);expect(result.deadLettered).toBe(dead?1:0);expect(d.mutations.at(-1)?.values[2]).toBe(error);
 });

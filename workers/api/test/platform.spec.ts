@@ -8,6 +8,24 @@ describe('platform onboarding boundaries', () => {
     expect((await response.json() as { error: string }).error).toBe('UNAUTHORIZED');
   });
 
+  it('does not expose login activity without an authenticated platform operator', async () => {
+    const response = await app.request('https://admin.gurukull.in/platform/v1/login-activity');
+    expect(response.status).toBe(401);
+    expect((await response.json() as { error: string }).error).toBe('UNAUTHORIZED');
+  });
+
+  it('does not expose school credential inventory without an authenticated platform operator', async () => {
+    const response = await app.request('https://admin.gurukull.in/platform/v1/school-credentials');
+    expect(response.status).toBe(401);
+    expect((await response.json() as { error: string }).error).toBe('UNAUTHORIZED');
+  });
+
+  it('does not issue a school credential without an authenticated platform operator', async () => {
+    const response = await app.request('https://admin.gurukull.in/platform/v1/schools/school/administrators/admin/access-key', { method: 'POST' });
+    expect(response.status).toBe(401);
+    expect((await response.json() as { error: string }).error).toBe('UNAUTHORIZED');
+  });
+
   it('rejects a platform login when the identifier or password is missing', async () => {
     const response = await app.request('https://admin.gurukull.in/platform/v1/login', {
       method: 'POST',

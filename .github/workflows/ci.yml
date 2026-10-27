@@ -1,30 +1,51 @@
 name: Cloudflare workspace CI
-
 on:
   pull_request:
   push:
     branches: [main]
-
+permissions:
+  contents: read
 concurrency:
   group: cloudflare-ci-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: 22.12.0
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npm --prefix apps/portal/source ci
-      - run: npm --prefix apps/portal/source run build
-      - run: npm test
+      - run: npm test -- --coverage
       - run: npx tsc --noEmit
-      - name: Validate Worker bundle
-        working-directory: workers/api
-        run: npx wrangler deploy --dry-run --env staging --outdir /tmp/gurukul-api-dry-run
-
+      - run: npx tsc -p tools/import/tsconfig.json --noEmit
+      - run: npx wrangler types workers/api/worker-configuration.d.ts --config workers/api/wrangler.toml --env production --env-interface ApiBindings --include-runtime=false --strict-vars=false --check
+      - run: node tools/verify-portal-theme.mjs
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm --prefix apps/portal/source audit --omit=dev --audit-level=high
+      - name: Package exact production configuration without deployment
+        run: npx wrangler deploy --config workers/api/wrangler.toml --env production --dry-run --outdir /tmp/gurukull-bundle
+      - run: node tools/verify-portal-build.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: reviewed-bundle-${{ github.sha }}
+          path: |
+            /tmp/gurukull-bundle
+            coverage/lcov.info
+            apps/portal/source/dist
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: 'false'
+          GITLEAKS_ENABLE_COMMENTS: 'false'
