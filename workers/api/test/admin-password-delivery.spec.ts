@@ -17,8 +17,7 @@ async function request(action:string,{conflict=false,providerFailure=false}={}){
  return {response,order,batches};
 }
 describe('administrator credential delivery consistency',()=>{
- it('commits the guarded password change before calling WhatsApp',async()=>{const r=await request('generate_and_send');expect(r.response.status).toBe(200);expect(r.order).toEqual(['commit','provider']);expect(r.batches[0][0].sql).toContain('INSERT INTO command_guards');});
- it('does not contact a provider when a concurrent account change invalidates the batch',async()=>{const r=await request('generate_and_send',{conflict:true});expect(r.response.status).toBe(409);expect(r.order).toEqual([]);});
- it('reports a saved password separately from an unconfirmed provider delivery',async()=>{const r=await request('generate_and_send',{providerFailure:true});expect(r.response.status).toBe(502);expect(await r.response.json()).toMatchObject({data:{passwordSaved:true,delivery:'unknown',version:2}});expect(r.order).toEqual(['commit','provider']);});
+ it('rejects WhatsApp delivery before changing a password, revoking sessions or contacting the provider',async()=>{const r=await request('generate_and_send');expect(r.response.status).toBe(503);expect(await r.response.json()).toMatchObject({error:'WHATSAPP_CREDENTIAL_DELIVERY_UNAVAILABLE'});expect(r.batches).toEqual([]);expect(r.order).toEqual([]);expect(sendWhatsAppPassword).not.toHaveBeenCalled();});
+ it('does not commit when a concurrent account change invalidates password generation',async()=>{const r=await request('generate',{conflict:true});expect(r.response.status).toBe(409);expect(r.order).toEqual([]);});
  it('cancels older encrypted credential emails in the same batch before queuing the replacement',async()=>{const r=await request('generate_and_email');expect(r.response.status).toBe(200);const sql=r.batches[0].map(x=>x.sql);expect(sql.findIndex(x=>x.includes('UPDATE outbox'))).toBeLessThan(sql.findIndex(x=>x.includes('INSERT INTO outbox')));expect(sendWhatsAppPassword).not.toHaveBeenCalled();});
 });

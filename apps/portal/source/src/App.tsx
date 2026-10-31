@@ -1,4 +1,5 @@
 import {NotFoundPage} from './pages/NotFoundPage';
+import {WhatsAppConnectionPage} from './pages/WhatsAppConnectionPage';
 import {PayrollManagementPage} from './pages/PayrollManagementPage';
 import {QuizManagementPage} from './pages/QuizManagementPage';
 import {LiveClassManagementPage} from './pages/LiveClassManagementPage';
@@ -105,6 +106,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="/transport" element={<TransportManagementPage />} />
                 <Route path="/inventory" element={<InventoryManagementPage />} />
                 <Route path="/notices" element={<NoticesManagementPage />} />
+                <Route path="/whatsapp" element={administrator?<WhatsAppConnectionPage />:<MemberWorkspacePage />} />
                 <Route path="/reception" element={<ReceptionManagementPage />} />
                 <Route path="/certificates" element={<CertificateManagementPage />} />
                 <Route path="/certificates/:id/print" element={<CertificatePrintPage />} />

@@ -1,4 +1,9 @@
 import {registerPasswordManagement} from './password-management.js';
+import {registerWhatsAppConnection} from './whatsapp-connection.js';
+import {registerWhatsAppTemplates} from './whatsapp-templates.js';
+import {registerWhatsAppSuppressions} from './whatsapp-suppressions.js';
+import {registerWhatsAppReadiness} from './whatsapp-readiness.js';
+import {registerWhatsAppMessageDrafts} from './whatsapp-message-drafts.js';
 import {registerPayrollManagement} from './payroll-management.js';
 import {registerLiveClassManagement} from './live-class-management.js';
 import {registerQuizManagement} from './quiz-management.js';
@@ -96,6 +101,11 @@ app.on('GET',['/api/teacher/school/details','/api/v2/school/details','/v2/school
   return c.json({status:'success',data:{id:s.id,name:s.name,code:s.code,status:s.status,configuration:config}});
 });
 registerPlatform(app);
+registerWhatsAppConnection(app);
+registerWhatsAppTemplates(app);
+registerWhatsAppSuppressions(app);
+registerWhatsAppReadiness(app);
+registerWhatsAppMessageDrafts(app);
 registerPasswordManagement(app);
 app.post('/api/v3/devices/register',requireAuth,async c=>{
   const u=c.get('user'),parsed=DeviceRegisterRequestSchema.safeParse(await readBody(c));if(!parsed.success)fail(422,'INVALID_DEVICE');

@@ -50,7 +50,7 @@ const MENU:MenuProps['items']=[
  {key:'attendance',icon:<CheckSquareOutlined/>,label:'Attendance & wellbeing',children:[item('/attendance','Student attendance',<CheckSquareOutlined/>),item('/leaves','Staff leave',<CalendarOutlined/>),item('/discipline','Student conduct',<SafetyCertificateOutlined/>)]},
  {key:'finance',icon:<WalletOutlined/>,label:'Finance',children:[item('/fees','Fees & collections',<WalletOutlined/>),item('/payroll','Payroll',<WalletOutlined/>)]},
  {key:'operations',icon:<InboxOutlined/>,label:'Campus operations',children:[item('/library','Library',<ReadOutlined/>),item('/transport','Transport',<CarOutlined/>),item('/inventory','Inventory',<InboxOutlined/>),item('/reception','Reception',<ContactsOutlined/>)]},
- {key:'communication',icon:<NotificationOutlined/>,label:'Communication',children:[item('/notices','Notices',<NotificationOutlined/>),item('/live-classes','Live classes',<VideoCameraOutlined/>)]},
+ {key:'communication',icon:<NotificationOutlined/>,label:'Communication',children:[item('/notices','Notices',<NotificationOutlined/>),item('/whatsapp','School WhatsApp',<NotificationOutlined/>),item('/live-classes','Live classes',<VideoCameraOutlined/>)]},
  {key:'records',icon:<FileDoneOutlined/>,label:'Records',children:[item('/certificates','Certificates',<FileDoneOutlined/>),item('/promotion','Promotions & graduation',<RiseOutlined/>),item('/alumni','Alumni',<TeamOutlined/>)]},
  {key:'reports',icon:<SettingOutlined/>,label:'Administration',children:[item('/settings','School settings',<SettingOutlined/>),item('/roles','Users & access',<UserOutlined/>),item('/feature-report','Feature status',<FileDoneOutlined/>)]},
 ];

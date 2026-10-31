@@ -4,7 +4,6 @@ import {z} from 'zod';
 import {db,readBody,requireAuth,requireRole,type AppEnv} from './context.js';
 import {decode,encode,fail,generatedPasswordDigest} from './security.js';
 import {audit,parse,guard,cleanupGuards} from './management-common.js';
-import {sendWhatsAppPassword} from './whatsapp.js';
 import {credentialEmailStatement, encryptCredentialEnvelope} from './email-delivery.js';
 export function validMemberKey(v:unknown):v is string{if(typeof v!=='string'||!/^gku1_[A-Za-z0-9_-]{43}$/.test(v))return false;try{const raw=decode(v.slice(5));return raw.length===32&&encode(raw)===v.slice(5);}catch{return false;}}
 async function cryptoKey(secret:string){if(new TextEncoder().encode(secret).length<32)fail(503,'MEMBER_ACCESS_NOT_CONFIGURED');return hmacKey(secret);}
@@ -38,14 +37,14 @@ export function registerMemberAccess(app:Hono<AppEnv>){
  app.post('/api/admin/users/:id/password',requireAuth,async c=>{
   const u=requireRole(c,'admin'),target=c.req.param('id');
   const input=parse(z.object({action:z.enum(['generate','generate_and_send','generate_and_email']),version:z.number().int().positive()}).strict(),await readBody(c));
+  // Do not replace a working credential before an unconfirmed external send.
+  if(input.action==='generate_and_send')fail(503,'WHATSAPP_CREDENTIAL_DELIVERY_UNAVAILABLE','WhatsApp credential delivery is temporarily unavailable. No password was changed. Generate a password for private handoff or use the available email option.');
   if(c.env.GENERATED_PASSWORD_AUTH_ENABLED!=='true'||!c.env.ADMIN_ACCESS_KEY_SECRET)fail(503,'PASSWORD_AUTH_NOT_CONFIGURED','Generated passwords are disabled until the Free-compatible password secret is configured.');
   const user=await db(c).prepare("SELECT u.id,u.full_name,u.user_type,u.version,u.status,u.email,COALESCE(pp.contact_mobile,u.mobile) AS mobile FROM users u LEFT JOIN parent_profiles pp ON pp.school_id=u.school_id AND pp.user_id=u.id WHERE u.id=? AND u.school_id=? AND u.user_type IN ('teacher','staff','parent','student')").bind(target,u.school_id).first<{id:string;full_name:string;user_type:string;version:number;status:string;email:string|null;mobile:string|null}>();
   if(!user)fail(404,'MEMBER_NOT_FOUND');
-  if(input.action==='generate_and_send'&&!['teacher','parent'].includes(user.user_type))fail(422,'WHATSAPP_PASSWORD_ROLE_NOT_SUPPORTED','WhatsApp password delivery is available for teachers and parents.');
   if(input.action==='generate_and_email'&&!user.email)fail(409,'MEMBER_EMAIL_REQUIRED','This account has no email address. Add an email before sending login details.');
   if(user.status!=='active')fail(409,'MEMBER_NOT_ACTIVE');
   if(user.version!==input.version)fail(409,'RECORD_CHANGED','Reload this account before generating a password.');
-  if(input.action==='generate_and_send'&&!user.mobile)fail(409,'MEMBER_CONTACT_REQUIRED','This teacher or parent has no mobile number.');
   const password=generateTemporaryPassword(),hash=await generatedPasswordDigest(password,c.env.ADMIN_ACCESS_KEY_SECRET,u.school_id,user.id),now=Math.floor(Date.now()/1000);
   const emailEventId=input.action==='generate_and_email'?crypto.randomUUID():null;
   const encryptedEmailPayload=emailEventId?await encryptCredentialEnvelope(c.env,{eventId:emailEventId,aggregateId:user.id,schoolId:u.school_id,recipient:user.email!,schoolName:c.get('school').name,schoolCode:c.get('school').code,fullName:user.full_name,role:user.user_type,identifier:user.email!,password,loginUrl:`https://${c.get('school').slug}.gurukull.in/login`}):null;
@@ -56,17 +55,13 @@ export function registerMemberAccess(app:Hono<AppEnv>){
    db(c).prepare('UPDATE user_access_credentials SET revoked_at=? WHERE school_id=? AND user_id=? AND revoked_at IS NULL').bind(now,u.school_id,target),
    db(c).prepare('UPDATE sessions SET revoked_at=? WHERE school_id=? AND user_id=? AND revoked_at IS NULL').bind(now,u.school_id,target),
    db(c).prepare("UPDATE outbox SET status='dead_letter',last_error='Credential replaced by administrator',payload_json='{}',lease_id=NULL,lease_until=NULL WHERE school_id=? AND aggregate_id=? AND event_type='email_credentials' AND status IN ('pending','processing','failed')").bind(u.school_id,target),
-   audit(c,input.action==='generate_and_send'?'generate_password_whatsapp':input.action==='generate_and_email'?'generate_password_email':'generate_password','user',target),
+   audit(c,input.action==='generate_and_email'?'generate_password_email':'generate_password','user',target),
   ];
   if(emailEventId&&encryptedEmailPayload)writes.push(credentialEmailStatement(db(c),{eventId:emailEventId,aggregateId:user.id,schoolId:u.school_id,recipient:user.email!,schoolName:c.get('school').name,schoolCode:c.get('school').code,fullName:user.full_name,role:user.user_type,identifier:user.email!,password,loginUrl:`https://${c.get('school').slug}.gurukull.in/login`},encryptedEmailPayload));
   writes.push(cleanupGuards(c,guardId));
   try{const results=await db(c).batch(writes);if(results.some(r=>!r.success))fail(503,'PASSWORD_WRITE_FAILED');}
   catch(error){if(String(error).includes('CHECK constraint'))fail(409,'RECORD_CHANGED','This account changed while its password was being generated. Refresh before trying again.');throw error;}
-  if(input.action==='generate_and_send'){
-   try{await sendWhatsAppPassword(c.env,{schoolName:c.get('school').name,schoolCode:c.get('school').code,mobile:user.mobile!,password,loginUrl:`https://${c.get('school').slug}.gurukull.in/login`});}
-   catch{return c.json({error:'PASSWORD_SAVED_DELIVERY_NOT_CONFIRMED',message:'The password was changed and previous sessions were revoked, but WhatsApp delivery could not be confirmed. Refresh this account before taking another action.',data:{passwordSaved:true,version:input.version+1,delivery:'unknown'}},502);}
-  }
   const identifier=['teacher','parent'].includes(user.user_type)?user.mobile:user.email||user.mobile;
-  return c.json({data:input.action==='generate'?{password,identifier,version:input.version+1}:input.action==='generate_and_email'?{identifier,version:input.version+1,email:{status:'queued'}}:{identifier,version:input.version+1,whatsapp:{status:'sent'}},message:input.action==='generate'?'Generated password shown once. Existing access keys and sessions were revoked.':input.action==='generate_and_email'?'Generated password and queued it for email delivery. Existing access keys and sessions were revoked.':'Generated password and sent it to the registered mobile by WhatsApp. Existing access keys and sessions were revoked.'});
+  return c.json({data:input.action==='generate'?{password,identifier,version:input.version+1}:{identifier,version:input.version+1,email:{status:'queued'}},message:input.action==='generate'?'Generated password shown once. Existing access keys and sessions were revoked.':'Generated password and queued it for email delivery. Existing access keys and sessions were revoked.'});
  });
 }
