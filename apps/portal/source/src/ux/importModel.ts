@@ -8,7 +8,7 @@ export function validateImport(rows:Record<string,ImportRow[]>):ImportProblem[]{
   for(const field of required[sheet])if(!r[field]?.trim())add(`${field} is required.`);
   if(sheet==='sections'&&!r.classCode&&!r.className)add('Choose a class code or class name.');
   if(sheet==='teachers'&&r.jobType&&!['full_time','part_time'].includes(r.jobType))add('Job type must be full_time or part_time. Contract status is not a working-hours category.');
-  if(r.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email))add('Enter a complete email address.');
+  if(r.email){const parts=r.email.split('@');const domain=parts[1]||'';const dot=domain.lastIndexOf('.');if(r.email.length>254||parts.length!==2||!parts[0]||/\s/.test(r.email)||dot<=0||dot===domain.length-1)add('Enter a complete email address.');}
   if(r.mobile&&!/^\+?\d{7,15}$/.test(r.mobile))add('Mobile must contain 7–15 digits with an optional leading +.');
   for(const f of ['joiningDate','enrollmentDate'])if(r[f]&&(!/^\d{4}-\d{2}-\d{2}$/.test(r[f])||Number.isNaN(Date.parse(r[f]))||new Date(r[f]).toISOString().slice(0,10)!==r[f]))add(`${f} must be a valid YYYY-MM-DD date.`);
   if(sheet==='parents'&&r.relationship&&!['father','mother','guardian'].includes(r.relationship))add('Relationship must be father, mother or guardian.');
