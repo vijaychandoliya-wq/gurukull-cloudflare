@@ -104,6 +104,7 @@ const StudentIdCard: React.FC<{
           name={student.fullName}
           src={student.avatar}
           size={72}
+          portrait
           alt={`Avatar for ${student.fullName}`}
         />
       </div>

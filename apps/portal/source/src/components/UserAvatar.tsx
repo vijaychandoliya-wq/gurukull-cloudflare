@@ -12,9 +12,10 @@ export const UserAvatar: React.FC<{
   src?: string | null;
   size?: number;
   alt?: string;
-}> = ({ name, src, size = 40, alt }) => {
+  portrait?: boolean;
+}> = ({ name, src, size = 40, alt, portrait = false }) => {
   const value = name?.trim() || 'Gurukull user';
-  if (src) return <img src={src} width={size} height={size} alt={alt || value} style={{ display: 'block', objectFit: 'cover', borderRadius: '50%' }} />;
+  if (src) return <img src={src} width={size} height={size} alt={alt || value} style={{ display: 'block', objectFit: 'cover', objectPosition: portrait ? 'center top' : 'center', borderRadius: portrait ? 0 : '50%', ...(portrait ? { width: '100%', height: '100%' } : {}) }} />;
   return <span role="img" aria-label={alt || value} style={{ display: 'inline-flex', width: size, height: size, flex: `0 0 ${size}px` }}><Avvvatars value={value} displayValue={initials(value)} size={size} style="character" radius={size} border /></span>;
 };
 
@@ -23,7 +24,8 @@ export const AuthenticatedAvatar: React.FC<{
   src?: string | null;
   size?: number;
   alt?: string;
-}> = ({ name, src, size = 40, alt }) => {
+  portrait?: boolean;
+}> = ({ name, src, size = 40, alt, portrait = false }) => {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const fallback = useMemo(() => <UserAvatar name={name} size={size} alt={alt} />, [name, size, alt]);
 
@@ -45,5 +47,5 @@ export const AuthenticatedAvatar: React.FC<{
   }, [src]);
 
   useEffect(() => () => { if (objectUrl?.startsWith('blob:')) URL.revokeObjectURL(objectUrl); }, [objectUrl]);
-  return objectUrl ? <UserAvatar name={name} src={objectUrl} size={size} alt={alt} /> : fallback;
+  return objectUrl ? <UserAvatar name={name} src={objectUrl} size={size} alt={alt} portrait={portrait} /> : fallback;
 };
