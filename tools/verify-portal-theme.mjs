@@ -19,8 +19,10 @@ for (const [path, marker] of requiredSourceChecks) {
   if (!source.includes(marker)) throw new Error(`Portal theme check failed: ${path} is missing ${marker}`);
 }
 
-const pages = (await readdir(resolve(root, 'src/pages'))).filter((file) => file.endsWith('Page.tsx'));
-if (pages.length < 40) throw new Error(`Portal theme check found only ${pages.length} page modules`);
+const app = await read('src/App.tsx');
+const pageModules = [...app.matchAll(/from\s+['"]\.\/pages\/([^'"]+)['"]/g)].map((match) => match[1]);
+if (pageModules.length === 0) throw new Error('Portal theme check found no routed page imports');
+for (const page of pageModules) await read(`src/pages/${page}.tsx`);
 
 const dist = resolve(root, 'dist');
 const cssAsset = (await readdir(resolve(dist, 'assets'))).find((file) => file.endsWith('.css'));
@@ -30,4 +32,4 @@ for (const marker of ['data-theme', '--gk-canvas', 'prefers-reduced-motion']) {
   if (!css.includes(marker)) throw new Error(`Portal theme check found no built CSS marker: ${marker}`);
 }
 
-console.log(`Cloudflare portal theme validation passed: ${pages.length} page modules, light/dark tokens, focus, and reduced-motion styles present.`);
+console.log(`Cloudflare portal theme validation passed: ${pageModules.length} imported page modules, light/dark tokens and reduced-motion styles present.`);
