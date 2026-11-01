@@ -13,7 +13,7 @@ export function registerSchoolManagement(app:Hono<AppEnv>){
   const u=requireRole(c,'admin');
   const result=await db(c).batch([
    db(c).prepare('SELECT timezone,currency,address,configuration_verified_at FROM school_configuration WHERE school_id=?').bind(u.school_id),
-   db(c).prepare('SELECT id,name,starts_on AS startsOn,ends_on AS endsOn,is_current AS isCurrent FROM academic_years WHERE school_id=? ORDER BY starts_on DESC').bind(u.school_id),
+   db(c).prepare(`SELECT y.id,y.name,y.starts_on AS startsOn,y.ends_on AS endsOn,y.is_current AS isCurrent,(SELECT COUNT(*) FROM students s JOIN users u ON u.id=s.user_id AND u.school_id=s.school_id WHERE s.school_id=y.school_id AND s.academic_year_id=y.id AND s.status='active' AND u.status='active') AS activeStudents FROM academic_years y WHERE y.school_id=? ORDER BY y.starts_on DESC`).bind(u.school_id),
    db(c).prepare('SELECT id,name,code,sort_order AS sortOrder FROM classes WHERE school_id=? ORDER BY sort_order,name').bind(u.school_id),
    db(c).prepare('SELECT s.id,s.class_id AS classId,s.name,c.name AS className FROM sections s JOIN classes c ON c.id=s.class_id AND c.school_id=s.school_id WHERE s.school_id=? ORDER BY c.sort_order,c.name,s.name').bind(u.school_id)
   ]);

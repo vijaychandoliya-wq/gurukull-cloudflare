@@ -1,3 +1,5 @@
+import {ModuleTabs} from '../components/portal/ModuleTabs';
+import {useDirtyForm} from '../components/portal/UX';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -49,6 +51,7 @@ interface Options {
   classes: Option[];
   subjects: Option[];
   teachers: Option[];
+  assignments: {sectionId:string;subjectId:string;teacherId:string;plannedPeriods:number}[];
 }
 
 interface Slot {
@@ -83,9 +86,13 @@ export const TimetablePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
 
   const [editorOpen, setEditorOpen] = useState(false);
+  const [editorDirty,setEditorDirty]=useState(false),[agendaDay,setAgendaDay]=useState('');
+  const closeGuard=useDirtyForm(editorOpen&&editorDirty);
+  const reloadAvailable=async()=>{try{const r=await apiClient.get(API.timetableOptionsApi);setOptions(r.data.data);message.info('Available assignments refreshed. Review the subject and teacher before retrying.');}catch{setFormError('Available assignments could not be refreshed. Your entered values are still here.');}};
   const [editing, setEditing] = useState<Slot | null>(null);
   const [editorCell, setEditorCell] = useState<{ day: string; periodNo: number } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const selectedSubjectId = Form.useWatch('subjectId', form);
 
   useEffect(() => {
     (async () => {
@@ -127,10 +134,24 @@ export const TimetablePage: React.FC = () => {
     return map;
   }, [slots]);
 
+  const classAssignments = useMemo(
+    () => options?.assignments.filter((a) => a.sectionId === standardLinkId) ?? [],
+    [options, standardLinkId],
+  );
+  const assignedSubjectIds = useMemo(() => new Set(classAssignments.map((a) => a.subjectId)), [classAssignments]);
+  const classSubjects = useMemo(
+    () => options?.subjects.filter((s: any) => s.sectionId === standardLinkId && assignedSubjectIds.has(s.value)) ?? [],
+    [options, standardLinkId, assignedSubjectIds],
+  );
+  const assignedTeachers = useMemo(() => {
+    const ids = new Set(classAssignments.filter((a) => !selectedSubjectId || a.subjectId === selectedSubjectId).map((a) => a.teacherId));
+    return options?.teachers.filter((teacher) => ids.has(teacher.value)) ?? [];
+  }, [options, classAssignments, selectedSubjectId]);
+
   const openEditor = (day: string, periodNo: number) => {
     const existing = byCell.get(`${day}-${periodNo}`) ?? null;
     slotKey.current=crypto.randomUUID();
-    setEditing(existing);
+    setEditorDirty(false);setEditing(existing);
     setEditorCell({ day, periodNo });
     setFormError(null);
     form.setFieldsValue({
@@ -171,7 +192,7 @@ export const TimetablePage: React.FC = () => {
         message.success('Timetable slot created.');
       }
 
-      setEditorOpen(false);
+      setEditorDirty(false);setEditorOpen(false);
       await loadGrid();
     } catch (e: any) {
       if (!e?.response) {if(!e.errorFields)setFormError('Connection interrupted. Retry uses the same command.');return;}
@@ -230,20 +251,31 @@ export const TimetablePage: React.FC = () => {
 
       {error && <Alert type="error" showIcon message={error} />}
 
-      <Card title="School timetable configuration"><Form form={configurationForm} layout="vertical"><Form.Item name="days" label="Teaching days" rules={[{required:true}]}><Select mode="multiple" options={['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(value=>({value,label:value}))}/></Form.Item><Form.Item name="periodsPerDay" label="Periods per day" rules={[{required:true}]}><InputNumber min={1} max={16}/></Form.Item><Button loading={saving} onClick={configure}>Save timetable configuration</Button></Form><Typography.Paragraph type="secondary">Enter the actual school schedule. Configure subjects and <Link to="/subjects">teacher assignments</Link> before adding slots.</Typography.Paragraph></Card>
+      {standardLinkId && !classAssignments.length && (
+        <Alert
+          type="warning"
+          showIcon
+          message="Teacher assignments are required before adding timetable slots."
+          description="Open Subjects & Catalog, assign each subject to a teacher for this class, then return here."
+          action={<Link to="/subjects">Open Subjects & Catalog</Link>}
+        />
+      )}
+
       {!options.configuration&&<Alert type="info" showIcon message="Save the actual teaching days and period count to open the timetable grid."/>}
 
-      <Card>
+
+
+      <ModuleTabs items={[{key:'grid',label:'Timetable',children:<><Card>
         {!standardLinkId ? (
           <Empty description="Select a class to build its timetable" />
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 760 }}>
+          <div className="gk-timetable-desktop" style={{ overflowX: 'auto' }}>
+            <table className="gk-timetable-grid" style={{ borderCollapse: 'collapse', width: '100%', minWidth: 760 }}>
               <thead>
                 <tr>
-                  <th style={{ ...cellBase, background: '#f8fafc', width: 90 }}>Period</th>
+                  <th style={{ ...cellBase, background: 'var(--gk-surface-inset)', width: 90 }}>Period</th>
                   {options.days.map((d) => (
-                    <th key={d} style={{ ...cellBase, background: '#f8fafc' }}>
+                    <th key={d} style={{ ...cellBase, background: 'var(--gk-surface-inset)' }}>
                       {dayLabel(d)}
                     </th>
                   ))}
@@ -252,7 +284,7 @@ export const TimetablePage: React.FC = () => {
               <tbody>
                 {options.periods.map((p) => (
                   <tr key={p}>
-                    <td style={{ ...cellBase, background: '#f8fafc', fontWeight: 600 }}>{p}</td>
+                    <td style={{ ...cellBase, background: 'var(--gk-surface-inset)', fontWeight: 600 }}>{p}</td>
                     {options.days.map((d) => {
                       const slot = byCell.get(`${d}-${p}`);
                       return (
@@ -260,11 +292,11 @@ export const TimetablePage: React.FC = () => {
                           key={d}
                           style={{
                             ...cellBase,
-                            cursor: 'pointer',
-                            background: slot ? '#fff' : '#fcfdff',
+                            cursor: classAssignments.length ? 'pointer' : 'not-allowed',
+                            background: slot ? 'var(--gk-surface-raised)' : 'var(--gk-surface-hover)',
                             verticalAlign: 'top',
                           }}
-                          onClick={() => openEditor(d, p)}
+                          tabIndex={classAssignments.length?0:-1} role="button" aria-label={`${d}, period ${p}: ${slot?.subjectName||'Add slot'}`} onKeyDown={e=>{if(classAssignments.length&&['Enter',' '].includes(e.key)){e.preventDefault();openEditor(d,p);}}} onClick={() => { if (classAssignments.length) openEditor(d, p); }}
                         >
                           {slot ? (
                             <Space direction="vertical" size={2} style={{ width: '100%' }}>
@@ -288,7 +320,7 @@ export const TimetablePage: React.FC = () => {
                                     size="small"
                                     type="text"
                                     danger
-                                    icon={<DeleteOutlined />}
+                                    icon={<DeleteOutlined />} aria-label="Remove timetable slot"
                                     onClick={(e) => e.stopPropagation()}
                                   />
                                 </Popconfirm>
@@ -309,12 +341,10 @@ export const TimetablePage: React.FC = () => {
           </div>
         )}
         {loading && <div style={{ padding: 12 }}><Spin /></div>}
-      </Card>
-
-      <Card title="Removed slots"><Table rowKey="id" dataSource={removed} columns={[{title:'Day',dataIndex:'day'},{title:'Period',dataIndex:'periodNo'},{title:'Subject',dataIndex:'subjectName'},{title:'Action',render:(_,row)=><Button onClick={()=>restore(row)}>Restore</Button>}]}/></Card>
+      </Card><Card className="gk-timetable-agenda" title="Day agenda"><Select aria-label="Choose teaching day" value={agendaDay||options.days[0]} options={options.days.map(value=>({value,label:value}))} onChange={setAgendaDay} style={{width:'100%',marginBottom:16}}/>{options.periods.map(period=>{const day=agendaDay||options.days[0],slot=byCell.get(`${day}-${period}`);return <Button block key={period} style={{height:'auto',padding:12,marginBottom:8,textAlign:'left'}} disabled={!classAssignments.length} onClick={()=>openEditor(day,period)}>Period {period}: {slot?.subjectName||'Add slot'}{slot?.teacherName&&<span> · {slot.teacherName}</span>}</Button>;})}</Card></>},{key:'configuration',label:'Configuration',children:<Card title="School timetable configuration"><Form form={configurationForm} layout="vertical"><Form.Item name="days" label="Teaching days" rules={[{required:true}]}><Select mode="multiple" options={['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(value=>({value,label:value}))}/></Form.Item><Form.Item name="periodsPerDay" label="Periods per day" rules={[{required:true}]}><InputNumber min={1} max={16}/></Form.Item><Button loading={saving} onClick={configure}>Save timetable configuration</Button></Form><Typography.Paragraph type="secondary">Enter the actual school schedule. Configure subjects and <Link to="/subjects">teacher assignments</Link> before adding slots.</Typography.Paragraph></Card>},{key:'removed',label:'Removed slots',children:<Card title="Removed slots"><Table rowKey="id" dataSource={removed} columns={[{title:'Day',dataIndex:'day'},{title:'Period',dataIndex:'periodNo'},{title:'Subject',dataIndex:'subjectName'},{title:'Action',render:(_,row)=><Button onClick={()=>restore(row)}>Restore</Button>}]}/></Card>}]}/>
       <Modal
         open={editorOpen}
-        onCancel={() => setEditorOpen(false)}
+        onCancel={() => !saving&&closeGuard(()=>setEditorOpen(false))}
         onOk={saveSlot}
         confirmLoading={saving}
         okText={editing ? 'Update slot' : 'Add slot'}
@@ -324,14 +354,14 @@ export const TimetablePage: React.FC = () => {
             : 'Timetable slot'
         }
       >
-        {formError && <Alert type="error" showIcon message={formError} style={{ marginBottom: 16 }} />}
-        <Form form={form} layout="vertical">
+        {formError && <Alert type="error" showIcon message={formError} description="Your inputs have been retained. Refresh available assignments if the school data changed, then review your selection." action={<Button onClick={reloadAvailable}>Refresh assignments</Button>} style={{ marginBottom: 16 }} />}
+        <Form form={form} layout="vertical" onValuesChange={()=>setEditorDirty(true)}>
           <Form.Item name="subjectId" label="Subject" rules={[{required:true}]}>
             <Select
               allowClear
               showSearch
               optionFilterProp="label"
-              options={options.subjects.filter((s:any)=>s.sectionId===standardLinkId)}
+              onChange={()=>form.setFieldValue('teacherId',undefined)} options={classSubjects}
               placeholder="Select subject"
             />
           </Form.Item>
@@ -340,7 +370,7 @@ export const TimetablePage: React.FC = () => {
               allowClear
               showSearch
               optionFilterProp="label"
-              options={options.teachers}
+              options={assignedTeachers}
               placeholder="Select teacher"
             />
           </Form.Item>
@@ -357,7 +387,7 @@ export const TimetablePage: React.FC = () => {
 };
 
 const cellBase: React.CSSProperties = {
-  border: '1px solid #eef0f4',
+  border: '1px solid var(--gk-border)',
   padding: 8,
   fontSize: 12,
   textAlign: 'left',

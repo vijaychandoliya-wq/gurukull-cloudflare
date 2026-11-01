@@ -1,0 +1,10 @@
+import {readdirSync,writeFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+const env=process.argv[2];if(!['staging','production'].includes(env))throw Error('Explicit staging or production target required');
+const run=args=>{const r=spawnSync('npx',['wrangler',...args,'--config','workers/api/wrangler.toml','--env',env],{encoding:'utf8'});if(r.status!==0)throw Error('Cloudflare preflight command failed');return r.stdout;};
+const rows=JSON.parse(run(['d1','execute','DB','--remote','--command','SELECT name FROM d1_migrations ORDER BY id','--json'])).flatMap(x=>x.results||[]);
+const local=readdirSync('migrations').filter(x=>x.endsWith('.sql')).sort(),remote=rows.map(x=>x.name).sort();
+if(JSON.stringify(local)!==JSON.stringify(remote))throw Error('Schema release mismatch. Rehearse and apply the reviewed migrations before deployment.');
+const bookmark=run(['d1','time-travel','info','DB','--json']);
+writeFileSync('recovery-bookmark.json',bookmark,{mode:0o600});
+console.log(JSON.stringify({event:'release_preflight',environment:env,migrations:local.length,recoveryBookmarkSaved:true}));

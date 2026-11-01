@@ -27,9 +27,10 @@ import {
   SearchOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient, API, withId } from '../services/api';
 import {PersonFormDrawer} from '../components/PersonFormDrawer';
+import {AuthenticatedAvatar} from '../components/UserAvatar';
 
 const { Title, Text } = Typography;
 
@@ -93,12 +94,14 @@ const statusColor: Record<string, string> = {
 
 export const StudentsPage: React.FC = () => {
   const navigate = useNavigate();
+  const [urlQuery,setUrlQuery]=useSearchParams();
   const [personFormOpen,setPersonFormOpen]=useState(false);
   const [form] = Form.useForm<Filters>();
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [meta, setMeta] = useState({ currentPage: 1, perPage: 20, total: 0 });
-  const [query, setQuery] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  const [query, setQuery] = useState(urlQuery.get('q')||'');
+  const [searchInput, setSearchInput] = useState(urlQuery.get('q')||'');
+  useEffect(()=>{setSearchInput(urlQuery.get('q')||'');},[urlQuery]);
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,6 +155,7 @@ export const StudentsPage: React.FC = () => {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setQuery(searchInput);
+      setUrlQuery(current=>{const next=new URLSearchParams(current);if(searchInput)next.set('q',searchInput);else next.delete('q');return next;},{replace:true});
       setMeta((current) => ({ ...current, currentPage: 1 }));
     }, 350);
     return () => window.clearTimeout(timer);
@@ -199,7 +203,7 @@ export const StudentsPage: React.FC = () => {
       dataIndex: 'name',
       render: (_, record) => (
         <Space>
-          <Avatar icon={<UserOutlined />} />
+          <AuthenticatedAvatar name={record.fullName || record.name} src={record.avatar} />
           <div>
             <Button
               type="link"
@@ -208,7 +212,7 @@ export const StudentsPage: React.FC = () => {
             >
               {record.fullName || record.name}
             </Button>
-            <div style={{ fontSize: 12, color: '#667085' }}>
+            <div style={{ fontSize: 12, color: 'var(--gk-text-secondary)' }}>
               {record.registrationNumber ? `Adm: ${record.registrationNumber}` : record.email || '—'}
             </div>
           </div>
@@ -372,7 +376,7 @@ export const StudentsPage: React.FC = () => {
         {!detailLoading && studentDetail && (
           <Space direction="vertical" size={20} style={{ width: '100%' }}>
             <Flex align="center" gap={16}>
-              <Avatar size={72} src={studentDetail.avatar || undefined} icon={<UserOutlined />} />
+              <AuthenticatedAvatar name={studentDetail.fullName || studentDetail.name} src={studentDetail.avatar} size={72} />
               <div>
                 <Title level={3} style={{ margin: 0 }}>
                   {studentDetail.fullName || studentDetail.name}

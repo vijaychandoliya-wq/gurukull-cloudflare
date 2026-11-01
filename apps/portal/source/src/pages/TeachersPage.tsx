@@ -14,7 +14,7 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   EditOutlined,
   EyeOutlined,
@@ -27,6 +27,7 @@ import {
 import { Drawer } from 'antd';
 import { apiClient, API } from '../services/api';
 import { TeacherFormDrawer } from '../components/TeacherFormDrawer';
+import {AuthenticatedAvatar} from '../components/UserAvatar';
 
 const { Title, Text } = Typography;
 
@@ -71,11 +72,13 @@ const statusColor: Record<string, string> = {
 
 export const TeachersPage: React.FC = () => {
   const navigate = useNavigate();
+  const [urlQuery,setUrlQuery]=useSearchParams();
   const [form] = Form.useForm<Filters>();
   const [teachers, setTeachers] = useState<TeacherRow[]>([]);
   const [meta, setMeta] = useState({ currentPage: 1, perPage: 20, total: 0 });
-  const [query, setQuery] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  const [query, setQuery] = useState(urlQuery.get('q')||'');
+  const [searchInput, setSearchInput] = useState(urlQuery.get('q')||'');
+  useEffect(()=>{setSearchInput(urlQuery.get('q')||'');},[urlQuery]);
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,6 +126,7 @@ export const TeachersPage: React.FC = () => {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setQuery(searchInput);
+      setUrlQuery(current=>{const next=new URLSearchParams(current);if(searchInput)next.set('q',searchInput);else next.delete('q');return next;},{replace:true});
       setMeta((current) => ({ ...current, currentPage: 1 }));
     }, 350);
     return () => window.clearTimeout(timer);
@@ -152,7 +156,7 @@ export const TeachersPage: React.FC = () => {
       dataIndex: 'fullName',
       render: (_, record) => (
         <Space>
-          <Avatar icon={<UserOutlined />} />
+          <AuthenticatedAvatar name={record.fullName || record.name} src={record.avatar} />
           <div>
             <Button
               type="link"
@@ -161,7 +165,7 @@ export const TeachersPage: React.FC = () => {
             >
               {record.fullName || record.name}
             </Button>
-            <div style={{ fontSize: 12, color: '#667085' }}>
+            <div style={{ fontSize: 12, color: 'var(--gk-text-secondary)' }}>
               {record.employeeId ? `Emp: ${record.employeeId}` : record.email || '—'}
             </div>
           </div>
@@ -178,7 +182,7 @@ export const TeachersPage: React.FC = () => {
           ) : (
             <Text type="secondary">—</Text>
           )}
-          <div style={{ fontSize: 12, color: '#667085' }}>
+          <div style={{ fontSize: 12, color: 'var(--gk-text-secondary)' }}>
             {record.qualification || record.specialization || '—'}
           </div>
         </div>

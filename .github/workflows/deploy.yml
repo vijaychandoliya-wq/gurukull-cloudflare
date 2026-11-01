@@ -1,32 +1,54 @@
 name: Cloudflare production deploy
-
 on:
   workflow_dispatch:
-
+permissions:
+  contents: read
+  statuses: read
 concurrency:
   group: cloudflare-production
   cancel-in-progress: false
-
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
-    permissions:
-      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
-          node-version: 22.12.0
+          node-version: '22'
           cache: npm
+      - name: Require local SonarQube approval for this exact commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/status" --jq '.statuses | map(select(.context == "SonarQube")) | first | .state' | grep -qx success
       - run: npm ci
       - run: npm --prefix apps/portal/source ci
-      - run: npm --prefix apps/portal/source run build
-      - run: npm test
+      - run: npm test -- --coverage
       - run: npx tsc --noEmit
-      - name: Deploy Worker and assets
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm --prefix apps/portal/source audit --omit=dev --audit-level=high
+      - name: Validate schema and capture recovery bookmark
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deploy --config workers/api/wrangler.toml --env production
+        run: node tools/release/preflight.mjs production
+      - name: Deploy reviewed Worker and portal assets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config workers/api/wrangler.toml --env production --var "SOURCE_SHA:$GITHUB_SHA"
+      - name: Deploy the push dispatcher
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config workers/jobs/wrangler.toml
+      - run: node tools/release/verify-deployment.mjs https://gurukul-worker-api.gurukull.workers.dev "$GITHUB_SHA"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: release-recovery-${{ github.sha }}
+          path: recovery-bookmark.json
+          retention-days: 30

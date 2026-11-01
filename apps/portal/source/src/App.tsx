@@ -1,3 +1,5 @@
+import {NotFoundPage} from './pages/NotFoundPage';
+import {WhatsAppConnectionPage} from './pages/WhatsAppConnectionPage';
 import {PayrollManagementPage} from './pages/PayrollManagementPage';
 import {QuizManagementPage} from './pages/QuizManagementPage';
 import {LiveClassManagementPage} from './pages/LiveClassManagementPage';
@@ -22,6 +24,7 @@ import { ConfigProvider, App as AntApp } from 'antd';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { antdCustomTheme } from './theme/antdTheme';
 import { ThemeProvider, useTheme } from './theme/ThemeProvider';
+import {LanguageProvider,useLanguage} from './i18n/LanguageProvider';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './pages/LoginPage';
@@ -103,6 +106,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="/transport" element={<TransportManagementPage />} />
                 <Route path="/inventory" element={<InventoryManagementPage />} />
                 <Route path="/notices" element={<NoticesManagementPage />} />
+                <Route path="/whatsapp" element={administrator?<WhatsAppConnectionPage />:<MemberWorkspacePage />} />
                 <Route path="/reception" element={<ReceptionManagementPage />} />
                 <Route path="/certificates" element={<CertificateManagementPage />} />
                 <Route path="/certificates/:id/print" element={<CertificatePrintPage />} />
@@ -110,7 +114,7 @@ const AppRoutes: React.FC = () => {
                 <Route path="/live-classes" element={<LiveClassManagementPage />} />
                 <Route path="/settings" element={<SchoolSetupPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </AppLayout>
           </RequireAuth>
@@ -122,8 +126,9 @@ const AppRoutes: React.FC = () => {
 
 const ThemedApp: React.FC = () => {
   const { resolvedTheme } = useTheme();
+  const {direction}=useLanguage();
   return (
-  <ConfigProvider theme={antdCustomTheme(resolvedTheme)}>
+  <ConfigProvider theme={antdCustomTheme(resolvedTheme)} direction={direction}>
     <AntApp>
       {window.location.hostname === 'admin.gurukull.in' ? <PlatformPortal /> : <BrowserRouter><AuthProvider><AppRoutes /></AuthProvider></BrowserRouter>}
     </AntApp>
@@ -131,4 +136,4 @@ const ThemedApp: React.FC = () => {
   );
 };
 
-export const App: React.FC = () => <ThemeProvider><ThemedApp /></ThemeProvider>;
+export const App: React.FC = () => <LanguageProvider><ThemeProvider><ThemedApp /></ThemeProvider></LanguageProvider>;

@@ -21,7 +21,7 @@ export async function verifyAccessKey(credential:string,stored:string,secret:str
  const imported=await key(secret);
  try{return await crypto.subtle.verify('HMAC',imported,decode(stored),message(schoolId,userId,credential));}catch{return false;}
 }
-export const setupPaths = new Set(['/api/admin/dashboard','/api/admin/features','/api/admin/students','/api/admin/teachers','/api/admin/profile','/api/admin/school','/api/admin/setup','/api/v2/logout','/v2/logout','/api/v2/myinfo','/v2/myinfo','/api/v2/school/details','/v2/school/details']);
+export const setupPaths = new Set(['/api/admin/dashboard','/api/admin/features','/api/admin/students','/api/admin/teachers','/api/admin/profile','/api/admin/school','/api/admin/setup','/api/admin/locale-settings','/api/portal/locale-preference','/api/v2/logout','/v2/logout','/api/v2/myinfo','/v2/myinfo','/api/v2/school/details','/v2/school/details']);
 // Owner setup includes narrowly scoped configuration/roster management; never arbitrary platform or mobile writes.
 export function setupRequestAllowed(method:string,path:string) {
  if(/^\/api\/admin\/(payroll|payroll-templates|payroll-structures)(\/[A-Za-z0-9_-]+)?$/.test(path))return ['GET','POST','PUT'].includes(method);
@@ -82,6 +82,7 @@ export function setupRequestAllowed(method:string,path:string) {
  if(method==='POST'&&/^\/api\/admin\/users\/[A-Za-z0-9_-]+\/(access-key|revoke-access)$/.test(path))return true;
  if(method==='POST'&&/^\/api\/admin\/users\/[A-Za-z0-9_-]+\/password$/.test(path))return true;
  if(method==='PUT'&&path==='/api/admin/profile')return true;
+ if(method==='PUT'&&['/api/admin/locale-settings','/api/portal/locale-preference'].includes(path))return true;
  if(method==='PUT'&&path==='/api/admin/school/configuration')return true;
  if(method==='GET'&&['/api/admin/academic-options','/api/admin/subjects','/api/admin/teacher-assignments','/api/admin/timetable/options','/api/admin/timetable/removed'].includes(path))return true;
  if(method==='PUT'&&path==='/api/admin/timetable/configuration')return true;

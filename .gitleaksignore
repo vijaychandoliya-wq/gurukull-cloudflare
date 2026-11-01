@@ -1,0 +1,6 @@
+# Reviewed nonpersisting unit-test marker strings, never production credentials.
+# Exact historical fingerprints only; no broad paths or secret rules disabled.
+fdb4ee4162a2737d780a0e2c8aab7b12d862e50f:workers/api/test/admin-enrollment.spec.ts:generic-api-key:16
+fdb4ee4162a2737d780a0e2c8aab7b12d862e50f:workers/api/test/fees-and-idcards.spec.ts:generic-api-key:5
+fdb4ee4162a2737d780a0e2c8aab7b12d862e50f:workers/api/test/module-coverage.spec.ts:generic-api-key:120
+fdb4ee4162a2737d780a0e2c8aab7b12d862e50f:workers/api/test/index.spec.ts:generic-api-key:6

@@ -18,7 +18,7 @@ export default {
     console.log(`[Scheduled Jobs] Triggered at ${new Date(event.scheduledTime).toISOString()}`);
     ctx.waitUntil(
       processOutboxBatch(env, 1).then(stats => {
-        console.log('[Scheduled Jobs Batch Stats]', stats);
+        console.log(JSON.stringify({event:'push_dispatch',configured:!!env.FIREBASE_SERVICE_ACCOUNT_JSON,...stats}));
       })
     );
   },

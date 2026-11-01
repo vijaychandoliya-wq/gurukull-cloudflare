@@ -4,6 +4,7 @@ compatibility_date = "2024-10-01"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 routes = [
+  { pattern = "smvdic.gurukull.in", custom_domain = true, zone_id = "38fe925b3775bec78580aabf2b9e912e" },
   { pattern = "rajesh.gurukull.in", custom_domain = true, zone_id = "38fe925b3775bec78580aabf2b9e912e" },
   { pattern = "mggs.gurukull.in", custom_domain = true, zone_id = "38fe925b3775bec78580aabf2b9e912e" },
   { pattern = "app.gurukull.in/*", zone_name = "gurukull.in" },
@@ -13,17 +14,21 @@ routes = [
 
 account_id = "e640cac6d5f89a87e7c952f4b3669af0"
 
+[triggers]
+crons = ["*/5 * * * *"]
+
 [vars]
-APP_RELEASE = "2026-10-21-platform-onboarding-1"
+APP_RELEASE = "2026-10-26-devops-1"
 ENVIRONMENT = "validation"
 AUTH_CPU_VERIFIED = "false"
 ENROLLMENT_CPU_VERIFIED = "false"
 ADMIN_ACCESS_KEY_CPU_VERIFIED = "true"
 GENERATED_PASSWORD_AUTH_ENABLED = "true"
+SELF_SERVICE_PASSWORD_ENABLED = "true"
 WHATSAPP_DEFAULT_COUNTRY_CODE = "91"
 EMAIL_FROM = "welcome@gurukull.in"
 SCHOOL_ACTIVATION_VERIFIED_CODES = "108,117"
-TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,admin.gurukull.in,gurukul-worker-api.gurukull.workers.dev,smvdic.gurukull.in"
+TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,admin.gurukull.in,gurukul-worker-api.gurukull.workers.dev"
 ALLOWED_ORIGINS = "https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in,https://api.gurukull.in,https://admin.gurukull.in,https://gurukul-worker-api.gurukull.workers.dev,https://rajesh.gurukull.in,https://mggs.gurukull.in,https://smvdic.gurukull.in"
 
 [assets]
@@ -56,20 +61,19 @@ bucket_name = "gurukul-prod-private"
 # Staging Environment
 [env.staging]
 name = "gurukul-worker-api-staging"
+routes = []
+workers_dev = true
 
-[[env.staging.send_email]]
-name = "EMAIL"
-remote = true
 
 [[env.staging.d1_databases]]
 binding = "DB"
 database_name = "gurukul-staging-db"
-database_id = "staging-d1-placeholder-id"
+database_id = "7ac60bf6-194c-413c-b316-915fe44ad84e"
 migrations_dir = "../../migrations"
 
 [[env.staging.kv_namespaces]]
 binding = "KV_SESSIONS"
-id = "staging-kv-placeholder-id"
+id = "16b03e55004c417ebf8c01c9d76016e3"
 
 [[env.staging.r2_buckets]]
 binding = "R2_MEDIA"
@@ -79,10 +83,12 @@ bucket_name = "gurukul-staging-private"
 [env.production]
 name = "gurukul-worker-api"
 routes = [
+  { pattern = "rajesh.gurukull.in", custom_domain = true, zone_id = "38fe925b3775bec78580aabf2b9e912e" },
+  { pattern = "mggs.gurukull.in", custom_domain = true, zone_id = "38fe925b3775bec78580aabf2b9e912e" },
   { pattern = "api.gurukull.in/*", zone_name = "gurukull.in" },
   { pattern = "*.gurukull.in/api/*", zone_name = "gurukull.in" },
   { pattern = "app.gurukull.in/*", zone_name = "gurukull.in" },
-  { pattern = "smvdic.gurukull.in/*", zone_name = "gurukull.in" },
+  { pattern = "smvdic.gurukull.in", custom_domain = true, zone_id = "38fe925b3775bec78580aabf2b9e912e" },
   { pattern = "admin.gurukull.in/*", zone_name = "gurukull.in" }
 ]
 
@@ -91,23 +97,30 @@ name = "EMAIL"
 remote = true
 
 [env.production.vars]
-APP_RELEASE = "2026-10-21-platform-onboarding-1"
+APP_RELEASE = "2026-10-26-devops-1"
 ENVIRONMENT = "production"
 AUTH_CPU_VERIFIED = "false"
 ENROLLMENT_CPU_VERIFIED = "false"
 ADMIN_ACCESS_KEY_CPU_VERIFIED = "true"
 GENERATED_PASSWORD_AUTH_ENABLED = "true"
+SELF_SERVICE_PASSWORD_ENABLED = "true"
 WHATSAPP_DEFAULT_COUNTRY_CODE = "91"
 EMAIL_FROM = "welcome@gurukull.in"
 SCHOOL_ACTIVATION_VERIFIED_CODES = "108,117"
-TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,admin.gurukull.in,gurukul-worker-api.gurukull.workers.dev,smvdic.gurukull.in"
+TRUSTED_SHARED_HOSTS = "gurukull.in,www.gurukull.in,app.gurukull.in,api.gurukull.in,admin.gurukull.in,gurukul-worker-api.gurukull.workers.dev"
 ALLOWED_ORIGINS = "https://gurukull.in,https://www.gurukull.in,https://app.gurukull.in,https://api.gurukull.in,https://admin.gurukull.in,https://gurukul-worker-api.gurukull.workers.dev,https://rajesh.gurukull.in,https://mggs.gurukull.in,https://smvdic.gurukull.in"
 
 [env.staging.vars]
+APP_RELEASE = "2026-10-26-devops-1"
 ENVIRONMENT = "staging"
 AUTH_CPU_VERIFIED = "false"
 ENROLLMENT_CPU_VERIFIED = "false"
-ADMIN_ACCESS_KEY_CPU_VERIFIED = "false"
+ADMIN_ACCESS_KEY_CPU_VERIFIED = "true"
+GENERATED_PASSWORD_AUTH_ENABLED = "true"
+SELF_SERVICE_PASSWORD_ENABLED = "true"
+EMAIL_DELIVERY_ENABLED = "false"
+TRUSTED_SHARED_HOSTS = "gurukul-worker-api-staging.gurukull.workers.dev"
+ALLOWED_ORIGINS = "https://gurukul-worker-api-staging.gurukull.workers.dev"
 
 [[env.production.d1_databases]]
 binding = "DB"
@@ -122,3 +135,25 @@ id = "9031e5a4b0bf4c18b69e8c1d713f8620"
 [[env.production.r2_buckets]]
 binding = "R2_MEDIA"
 bucket_name = "gurukul-prod-private"
+
+[observability]
+enabled = true
+head_sampling_rate = 0.1
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.01
+[env.production.observability]
+enabled = true
+head_sampling_rate = 0.1
+[env.production.observability.traces]
+enabled = true
+head_sampling_rate = 0.01
+[env.staging.observability]
+enabled = true
+head_sampling_rate = 1
+[env.staging.observability.traces]
+enabled = true
+head_sampling_rate = 0.1
+
+[build]
+command = 'node "$(git rev-parse --show-toplevel)/tools/release/build-portal.mjs"'

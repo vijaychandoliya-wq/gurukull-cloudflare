@@ -21,7 +21,7 @@ export const antdCustomTheme = (mode: ResolvedTheme): ThemeConfig => ({
     colorBgElevated: mode === 'dark' ? '#111111' : '#ffffff',
     colorText: mode === 'dark' ? '#ededed' : '#172033',
     colorTextSecondary: mode === 'dark' ? '#a3a3a3' : '#667085',
-    colorTextTertiary: mode === 'dark' ? '#929292' : '#98a2b3',
+    colorTextTertiary: mode === 'dark' ? '#929292' : '#667085',
     colorBorder: mode === 'dark' ? '#2e2e2e' : '#d0d5dd',
     colorBorderSecondary: mode === 'dark' ? '#242424' : '#eaecf0',
     borderRadius: 10,

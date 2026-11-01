@@ -17,3 +17,10 @@ database_id = "70b2a68a-d0c8-47b6-8837-c66eef4c19e0"
 binding = "KV_CACHE"
 id = "9031e5a4b0bf4c18b69e8c1d713f8620"
 
+
+[observability]
+enabled = true
+head_sampling_rate = 0.1
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.01
