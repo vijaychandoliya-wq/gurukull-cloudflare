@@ -34,7 +34,7 @@ export const WhatsAppConnectionPage:React.FC=()=>{
   <Alert type="info" showIcon message="Connection setup is in progress" description="Save your school's intended WhatsApp Business number as a draft. It is not connected to Meta, verified, or able to send messages yet."/>
   {error&&<Alert type="error" showIcon message={error} action={<Button size="small" onClick={()=>void load()}>Reload</Button>}/>}
   <ModuleTabs items={[
-   {key:'number',label:'School number',children:<Card title="School-owned number" extra={<Tag>Not connected</Tag>} loading={loading}>
+   {key:'number',forceRender:true,label:'School number',children:<Card title="School-owned number" extra={<Tag>Not connected</Tag>} loading={loading}>
    <Form form={form} layout="vertical" onFinish={save} onValuesChange={()=>{command.current=crypto.randomUUID();}}>
     <Form.Item name="displayName" label="School display name" rules={[{required:true,whitespace:true,message:'Enter the school display name.'},{max:100}]}><Input maxLength={100}/></Form.Item>
     <Form.Item name="phone" label="WhatsApp number with country code" extra="For India, start with +91. Check that your number is eligible for the official WhatsApp Business Platform before connecting it." rules={[{required:true,message:'Enter the school number.'},{pattern:/^\+[1-9][0-9]{7,14}$/,message:'Enter the full international number, starting with + and country code.'}]}><Input placeholder="+91…" inputMode="tel" maxLength={16}/></Form.Item>
