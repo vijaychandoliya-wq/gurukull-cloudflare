@@ -2,7 +2,7 @@ name: Cloudflare workspace CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, development]
 permissions:
   contents: read
 concurrency:

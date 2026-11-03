@@ -1,6 +1,10 @@
 name: Cloudflare production deploy
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: [Cloudflare workspace CI]
+    types: [completed]
+    branches: [main]
 permissions:
   contents: read
   statuses: read
@@ -9,12 +13,20 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
+    env:
+      RELEASE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.RELEASE_SHA }}
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: '22'
@@ -23,7 +35,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/status" --jq '.statuses | map(select(.context == "SonarQube")) | first | .state' | grep -qx success
+          gh api "repos/$GITHUB_REPOSITORY/commits/$RELEASE_SHA/status" --jq '.statuses | map(select(.context == "SonarQube")) | first | .state' | grep -qx success
+      - name: Prevent an older queued release replacing newer main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          current_main=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if [ "$current_main" != "$RELEASE_SHA" ]; then
+            echo "Main has changed. Run the deployment for the newest reviewed commit."
+            exit 1
+          fi
       - run: npm ci
       - run: npm --prefix apps/portal/source ci
       - run: npm test -- --coverage
@@ -39,16 +60,16 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deploy --config workers/api/wrangler.toml --env production --var "SOURCE_SHA:$GITHUB_SHA"
+        run: npx wrangler deploy --config workers/api/wrangler.toml --env production --var "SOURCE_SHA:$RELEASE_SHA"
       - name: Deploy the push dispatcher
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler deploy --config workers/jobs/wrangler.toml
-      - run: node tools/release/verify-deployment.mjs https://gurukul-worker-api.gurukull.workers.dev "$GITHUB_SHA"
+      - run: node tools/release/verify-deployment.mjs https://gurukul-worker-api.gurukull.workers.dev "$RELEASE_SHA"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: release-recovery-${{ github.sha }}
+          name: release-recovery-${{ env.RELEASE_SHA }}
           path: recovery-bookmark.json
           retention-days: 30
