@@ -33,6 +33,8 @@ import { useAuth } from '../../context/AuthContext';
 import {humanize} from '../../ux/format';
 import { ThemeSwitcher } from '../ThemeSwitcher';
 import {LanguageSwitcher} from '../LanguageSwitcher';
+import {useLanguage} from '../../i18n/LanguageProvider';
+import {navigationTranslations,navigationText} from '../../i18n/navigation';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -55,9 +57,24 @@ const MENU:MenuProps['items']=[
  {key:'reports',icon:<SettingOutlined/>,label:'Administration',children:[item('/settings','School settings',<SettingOutlined/>),item('/roles','Users & access',<UserOutlined/>),item('/feature-report','Feature status',<FileDoneOutlined/>)]},
 ];
 
+function translateNavigation(items:MenuProps['items'],locale:string):MenuProps['items']{
+ const translations=navigationTranslations[locale];
+ if(!translations)return items;
+ return items?.map(entry=>{
+  if(!entry||entry.type==='divider'||entry.type==='group')return entry;
+  const translated={...entry};
+  if(typeof translated.label==='string')translated.label=translations[translated.label]||translated.label;
+  if('children' in translated&&translated.children)translated.children=translateNavigation(translated.children,locale) as typeof translated.children;
+  return translated;
+ });
+}
+
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const { user, schoolCode, schoolName, academicYear, schoolLogo, logout,hasRole } = useAuth();
+  const {locale}=useLanguage();
+  const adminMenu=translateNavigation(MENU,locale);
+  const text=(label:string)=>navigationText(locale,label);
   const navigate = useNavigate();
   const location = useLocation();
   const navigateSafely=(path:string)=>{const event=new CustomEvent('gk-before-navigate',{cancelable:true,detail:{proceed:()=>navigate(path)}});if(window.dispatchEvent(event))navigate(path);};
@@ -65,23 +82,23 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   const sectionKeys = ['people','academics','assessment','attendance','finance','operations','communication','records','reports'];
   const routeRoot='/'+location.pathname.split('/')[1];
   const rootPath=['/marks-entry','/exam-results'].includes(routeRoot)?'/exams':routeRoot;
-  const activeSection = MENU.find((item: any) => item && Array.isArray(item.children) && item.children.some((child: any) => child.key === rootPath)) as any;
+  const activeSection = adminMenu?.find((item: any) => item && Array.isArray(item.children) && item.children.some((child: any) => child.key === rootPath)) as any;
   const [openKeys, setOpenKeys] = useState<string[]>(() => activeSection ? [activeSection.key] : ['people']);
   useEffect(()=>{if(activeSection)setOpenKeys([activeSection.key]);},[rootPath]);
-  const currentPage=(MENU.flatMap((item:any)=>item?.children||[item]) as any[]).find(item=>item.key===rootPath)?.label||humanize(rootPath.slice(1));
+  const currentPage=(adminMenu?.flatMap((item:any)=>item?.children||[item]) as any[]).find(item=>item.key===rootPath)?.label||humanize(rootPath.slice(1));
 
   const userMenu: MenuProps['items'] = [
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: 'My profile',
+      label: text('My profile'),
       onClick: () => navigateSafely('/profile'),
     },
     { type: 'divider' },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: 'Sign out',
+      label: text('Sign out'),
       onClick: () => {
         void logout().then(() => navigate('/login', { replace: true }));
       },
@@ -89,7 +106,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   ];
 
   return (
-    <Layout className="gk-shell"><a href="#portal-main" className="gk-skip-link">Skip to content</a>
+    <Layout className="gk-shell"><a href="#portal-main" className="gk-skip-link">{text('Skip to content')}</a>
       <Sider
         theme="light"
         width={248}
@@ -113,14 +130,14 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           {!collapsed && (
             <div className="gk-brand-copy" title={schoolName||'Gurukul'}>
               <Text strong ellipsis>{schoolName || 'Gurukul'}</Text>
-              <Text type="secondary" ellipsis>{academicYear || 'School administration'}</Text>
+              <Text type="secondary" ellipsis>{academicYear || text('School administration')}</Text>
             </div>
           )}
         </div>
 
         <Menu
           mode="inline"
-          items={hasRole('schooladmin','superadmin')?MENU:[{key:'/dashboard',icon:<DashboardOutlined/>,label:'My workspace'},...(hasRole('teacher')?[{key:'/attendance',icon:<CheckSquareOutlined/>,label:'My class attendance'},{key:'/homework',icon:<FileTextOutlined/>,label:'My homework'},{key:'/lesson-plans',icon:<FileTextOutlined/>,label:'My lesson plans'},{key:'/exams',icon:<BookOutlined/>,label:'My assigned exams'},{key:'/quizzes',icon:<QuestionCircleOutlined/>,label:'My quizzes'},{key:'/live-classes',icon:<VideoCameraOutlined/>,label:'My live classes'}]:[]),...(hasRole('teacher','staff','nonteaching')?[{key:'/leaves',icon:<CalendarOutlined/>,label:'My leave'},{key:'/payroll',icon:<WalletOutlined/>,label:'My payslips'}]:[]),...(hasRole('student')?[{key:'/student-portal',icon:<BookOutlined/>,label:'My learning'}]:[]),...(hasRole('parent')?[{key:'/parent-portal',icon:<BookOutlined/>,label:'My children’s learning'}]:[]),{key:'/profile',icon:<UserOutlined/>,label:'My profile'}]}
+          items={translateNavigation(hasRole('schooladmin','superadmin')?MENU:[{key:'/dashboard',icon:<DashboardOutlined/>,label:'My workspace'},...(hasRole('teacher')?[{key:'/attendance',icon:<CheckSquareOutlined/>,label:'My class attendance'},{key:'/homework',icon:<FileTextOutlined/>,label:'My homework'},{key:'/lesson-plans',icon:<FileTextOutlined/>,label:'My lesson plans'},{key:'/exams',icon:<BookOutlined/>,label:'My assigned exams'},{key:'/quizzes',icon:<QuestionCircleOutlined/>,label:'My quizzes'},{key:'/live-classes',icon:<VideoCameraOutlined/>,label:'My live classes'}]:[]),...(hasRole('teacher','staff','nonteaching')?[{key:'/leaves',icon:<CalendarOutlined/>,label:'My leave'},{key:'/payroll',icon:<WalletOutlined/>,label:'My payslips'}]:[]),...(hasRole('student')?[{key:'/student-portal',icon:<BookOutlined/>,label:'My learning'}]:[]),...(hasRole('parent')?[{key:'/parent-portal',icon:<BookOutlined/>,label:'My children’s learning'}]:[]),{key:'/profile',icon:<UserOutlined/>,label:'My profile'}],locale)}
           selectedKeys={[rootPath]}
           openKeys={collapsed ? [] : openKeys}
           onOpenChange={(keys) => {
@@ -134,7 +151,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           style={{ borderInlineEnd: 'none' }}
         />
       </Sider>
-      {!collapsed&&<button className="gk-nav-backdrop" aria-label="Close navigation" onClick={()=>setCollapsed(true)}/>}
+      {!collapsed&&<button className="gk-nav-backdrop" aria-label={text('Close navigation')} onClick={()=>setCollapsed(true)}/>}
       <Layout>
         <Header
           className="gk-header"
@@ -145,13 +162,13 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed((c) => !c)}
-              aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+              aria-label={text(collapsed ? 'Expand navigation' : 'Collapse navigation')}
             />
             {hasRole('schooladmin','superadmin')&&<Input
-              aria-label="Search students"
+              aria-label={text('Search students')}
               className="gk-global-search"
               prefix={<SearchOutlined />}
-              placeholder="Search students by name or admission…"
+              placeholder={text('Search students by name or admission…')}
               onPressEnter={(e) => {
                 const q = (e.target as HTMLInputElement).value.trim();
                 if (q) navigateSafely(`/students?q=${encodeURIComponent(q)}`);
@@ -163,7 +180,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
             <ThemeSwitcher compact />
             <LanguageSwitcher compact />
 
-              <Button type="text" shape="circle" icon={<NotificationOutlined />} onClick={() => navigateSafely('/notices')} aria-label="Notifications" />
+              <Button type="text" shape="circle" icon={<NotificationOutlined />} onClick={() => navigateSafely('/notices')} aria-label={text('Notifications')} />
 
             {schoolCode && <Tag color="blue">{schoolCode}</Tag>}
             <Dropdown menu={{ items: userMenu }} placement="bottomRight" trigger={['click']}>
@@ -179,7 +196,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           </div>
         </Header>
 
-        <Content className="gk-content" id="portal-main" tabIndex={-1}><Breadcrumb className="gk-breadcrumb" items={[{title:<span>{activeSection?.label||'School'}</span>},{title:currentPage},...(location.pathname!==rootPath?[{title:'Record details'}]:[])]}/>{children}</Content>
+        <Content className="gk-content" id="portal-main" tabIndex={-1}><Breadcrumb className="gk-breadcrumb" items={[{title:<span>{activeSection?.label||text('School')}</span>},{title:currentPage},...(location.pathname!==rootPath?[{title:text('Record details')}]:[])]}/>{children}</Content>
       </Layout>
     </Layout>
   );

@@ -1,3 +1,7 @@
+import enUS from 'antd/locale/en_US';
+import hiIN from 'antd/locale/hi_IN';
+import taIN from 'antd/locale/ta_IN';
+import urPK from 'antd/locale/ur_PK';
 import {NotFoundPage} from './pages/NotFoundPage';
 import {WhatsAppConnectionPage} from './pages/WhatsAppConnectionPage';
 import {PayrollManagementPage} from './pages/PayrollManagementPage';
@@ -126,9 +130,10 @@ const AppRoutes: React.FC = () => {
 
 const ThemedApp: React.FC = () => {
   const { resolvedTheme } = useTheme();
-  const {direction}=useLanguage();
+  const {direction,locale}=useLanguage();
+  const componentLocale={en:enUS,hi:hiIN,ta:taIN,ur:urPK}[locale]||enUS;
   return (
-  <ConfigProvider theme={antdCustomTheme(resolvedTheme)} direction={direction}>
+  <ConfigProvider theme={antdCustomTheme(resolvedTheme)} direction={direction} locale={componentLocale}>
     <AntApp>
       {window.location.hostname === 'admin.gurukull.in' ? <PlatformPortal /> : <BrowserRouter><AuthProvider><AppRoutes /></AuthProvider></BrowserRouter>}
     </AntApp>
