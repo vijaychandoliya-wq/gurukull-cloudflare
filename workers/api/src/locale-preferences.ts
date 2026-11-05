@@ -15,34 +15,33 @@ export const SUPPORTED_LOCALE_TAGS = [
 ] as const;
 export type SupportedLocaleTag = typeof SUPPORTED_LOCALE_TAGS[number];
 
-/** Only reviewed packs can be selected in production. The full registry is
- * retained so future packs have stable identifiers without pretending that
- * machine-generated text is a reviewed translation. */
-export const PILOT_LOCALE_TAGS = ['en','hi','ta','ur'] as const;
+/** The core interface is selectable in all scheduled Indian languages.
+ * Additional packs are translation previews, not complete module translations. */
+export const AVAILABLE_LOCALE_TAGS = SUPPORTED_LOCALE_TAGS;
 export const DEFAULT_LOCALE_TAG = 'en' as const;
 const supportedTags = new Set<string>(SUPPORTED_LOCALE_TAGS);
-const pilotTags = new Set<string>(PILOT_LOCALE_TAGS);
+const availableTags = new Set<string>(AVAILABLE_LOCALE_TAGS);
 
 export function isSupportedLocaleTag(value:unknown): value is SupportedLocaleTag {
   return typeof value==='string' && supportedTags.has(value);
 }
-export function isPilotLocaleTag(value:unknown): value is typeof PILOT_LOCALE_TAGS[number] {
-  return typeof value==='string' && pilotTags.has(value);
+export function isAvailableLocaleTag(value:unknown): value is typeof AVAILABLE_LOCALE_TAGS[number] {
+  return typeof value==='string' && availableTags.has(value);
 }
 
 type LocaleSettings = {defaultLocale:string;enabledLocales:string[];version:number};
-const DEFAULT_SETTINGS:LocaleSettings = {defaultLocale:DEFAULT_LOCALE_TAG,enabledLocales:[...PILOT_LOCALE_TAGS],version:0};
+const DEFAULT_SETTINGS:LocaleSettings = {defaultLocale:DEFAULT_LOCALE_TAG,enabledLocales:[...AVAILABLE_LOCALE_TAGS],version:0};
 type SettingsRow = {default_locale:string;enabled_locales_json:string;version:number};
 type PreferenceRow = {language_mode:'follow_school'|'explicit';locale_tag:string|null;version:number};
 
 function parseEnabledLocales(value:string):string[] {
   try {
     const parsed=JSON.parse(value);
-    if (!Array.isArray(parsed) || !parsed.every(isPilotLocaleTag) || !parsed.length) throw new Error('invalid locale settings');
+    if (!Array.isArray(parsed) || !parsed.every(isAvailableLocaleTag) || !parsed.length) throw new Error('invalid locale settings');
     return [...new Set(parsed)];
   } catch {
     // A corrupted administrative setting must not put a tenant into an
-    // unusable language. The safe, reviewed product default remains English.
+    // unusable language. The safe product default remains English.
     return [...DEFAULT_SETTINGS.enabledLocales];
   }
 }
@@ -51,7 +50,7 @@ function toSettings(row:SettingsRow|undefined|null):LocaleSettings {
   if(!row)return {...DEFAULT_SETTINGS,enabledLocales:[...DEFAULT_SETTINGS.enabledLocales]};
   const enabledLocales=parseEnabledLocales(row.enabled_locales_json);
   return {
-    defaultLocale:isPilotLocaleTag(row.default_locale)&&enabledLocales.includes(row.default_locale)?row.default_locale:DEFAULT_LOCALE_TAG,
+    defaultLocale:isAvailableLocaleTag(row.default_locale)&&enabledLocales.includes(row.default_locale)?row.default_locale:DEFAULT_LOCALE_TAG,
     enabledLocales,
     version:row.version,
   };
@@ -64,8 +63,7 @@ async function readSettings(c:ApiContext):Promise<LocaleSettings> {
 
 function assertSelectableLocale(locale:string, enabled:string[]) {
   if(!isSupportedLocaleTag(locale))fail(422,'UNSUPPORTED_LOCALE','Choose a recognised Gurukull language code.');
-  if(!isPilotLocaleTag(locale))fail(409,'LOCALE_PACK_NOT_READY','That language pack is planned but has not completed linguistic review.');
-  if(!enabled.includes(locale))fail(422,'LOCALE_NOT_ENABLED','This school has not enabled the selected reviewed language.');
+  if(!enabled.includes(locale))fail(422,'LOCALE_NOT_ENABLED','This school has not enabled the selected language.');
 }
 
 export const localePreferenceInput=z.object({
@@ -79,7 +77,7 @@ export const localePreferenceInput=z.object({
 
 export const schoolLocaleSettingsInput=z.object({
   defaultLocale:z.string().trim().max(32),
-  enabledLocales:z.array(z.string().trim().max(32)).min(1).max(PILOT_LOCALE_TAGS.length),
+  enabledLocales:z.array(z.string().trim().max(32)).min(1).max(AVAILABLE_LOCALE_TAGS.length),
   version:z.number().int().nonnegative(),
 }).strict().superRefine((value,ctx)=>{
   if(new Set(value.enabledLocales).size!==value.enabledLocales.length)ctx.addIssue({code:'custom',path:['enabledLocales'],message:'Choose each language only once.'});
@@ -96,7 +94,7 @@ export function registerLocalePreferences(app:Hono<AppEnv>) {
     const mode=preference?.language_mode||'follow_school';
     const explicit=preference?.locale_tag||null;
     const localeTag=mode==='explicit'&&explicit&&settings.enabledLocales.includes(explicit)?explicit:settings.defaultLocale;
-    return c.json({data:{mode,localeTag,version:preference?.version||0,schoolDefaultLocale:settings.defaultLocale,enabledLocales:settings.enabledLocales,availableLocales:PILOT_LOCALE_TAGS,registry:SUPPORTED_LOCALE_TAGS}});
+    return c.json({data:{mode,localeTag,version:preference?.version||0,schoolDefaultLocale:settings.defaultLocale,enabledLocales:settings.enabledLocales,availableLocales:AVAILABLE_LOCALE_TAGS,translationScope:'core_preview',registry:SUPPORTED_LOCALE_TAGS}});
   });
 
   app.put('/api/portal/locale-preference',requireAuth,async c=>{
@@ -117,7 +115,7 @@ export function registerLocalePreferences(app:Hono<AppEnv>) {
 
   app.put('/api/admin/locale-settings',requireAuth,async c=>{
     const u=requireRole(c,'admin','superadmin'),input=parse(schoolLocaleSettingsInput,await readBody(c)),id=crypto.randomUUID();
-    for(const locale of input.enabledLocales)assertSelectableLocale(locale,PILOT_LOCALE_TAGS as unknown as string[]);
+    for(const locale of input.enabledLocales)assertSelectableLocale(locale,AVAILABLE_LOCALE_TAGS as unknown as string[]);
     assertSelectableLocale(input.defaultLocale,input.enabledLocales);
     return c.json(await command(c,'school-locale-settings.update',input,()=>[
       guard(c,'COALESCE((SELECT version FROM school_locale_settings WHERE school_id=?),0)=?',[u.school_id,input.version],id),

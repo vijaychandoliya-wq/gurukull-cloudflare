@@ -14,7 +14,7 @@ export const LanguageSwitcher:React.FC<{compact?:boolean}>=({compact=false})=>{
       value={locale}
       onChange={setLocale}
       suffixIcon={<GlobalOutlined/>}
-      options={AVAILABLE_LOCALES.map(language=>({value:language.tag,label:<span lang={language.tag}>{language.nativeName}</span>}))}
+      options={AVAILABLE_LOCALES.map(language=>({value:language.tag,label:<span lang={language.tag}>{language.nativeName}{language.availability==='preview'?' · Preview':''}</span>}))}
     />
   </Tooltip>;
 };

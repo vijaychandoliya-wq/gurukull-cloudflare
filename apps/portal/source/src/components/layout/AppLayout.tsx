@@ -34,7 +34,7 @@ import {humanize} from '../../ux/format';
 import { ThemeSwitcher } from '../ThemeSwitcher';
 import {LanguageSwitcher} from '../LanguageSwitcher';
 import {useLanguage} from '../../i18n/LanguageProvider';
-import {navigationTranslations,navigationText} from '../../i18n/navigation';
+import {navigationText} from '../../i18n/navigation';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -58,12 +58,10 @@ const MENU:MenuProps['items']=[
 ];
 
 function translateNavigation(items:MenuProps['items'],locale:string):MenuProps['items']{
- const translations=navigationTranslations[locale];
- if(!translations)return items;
  return items?.map(entry=>{
   if(!entry||entry.type==='divider'||entry.type==='group')return entry;
   const translated={...entry};
-  if(typeof translated.label==='string')translated.label=translations[translated.label]||translated.label;
+  if(typeof translated.label==='string')translated.label=navigationText(locale,translated.label);
   if('children' in translated&&translated.children)translated.children=translateNavigation(translated.children,locale) as typeof translated.children;
   return translated;
  });

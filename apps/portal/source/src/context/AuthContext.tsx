@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
+import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
+import {useLanguage} from '../i18n/LanguageProvider';
 import { apiClient, API, TOKEN_KEY, SCHOOL_CODE_KEY, clearPortalSession } from '../services/api';
 
 export type RoleType =
@@ -75,6 +76,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
   );
+
+  const {restoreAccountLocale}=useLanguage();
+  useEffect(()=>{
+    if(!user?.id||!schoolCode)return;
+    let active=true;
+    apiClient.get(API.localePreferenceApi).then(response=>{
+      if(active&&response.data?.data?.localeTag)restoreAccountLocale(response.data.data.localeTag);
+    }).catch(()=>{/* Optional preference lookup must not prevent sign-in. */});
+    return ()=>{active=false;};
+  },[user?.id,schoolCode,restoreAccountLocale]);
 
   const login = useCallback(
     async (code: string, identifier: string, password: string) => {

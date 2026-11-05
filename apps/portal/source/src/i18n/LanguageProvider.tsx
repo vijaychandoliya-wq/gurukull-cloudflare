@@ -1,9 +1,10 @@
-import React,{createContext,useCallback,useContext,useEffect,useMemo,useState} from 'react';
+import {interfaceText} from './interfaceText';
+import React,{createContext,useCallback,useContext,useEffect,useMemo,useState,useRef} from 'react';
 import {DEFAULT_LOCALE,isAvailableLocale,localeDefinition,preferredAvailableLocale} from './registry';
 import {messages,type MessageKey} from './messages';
 
 export const LOCALE_STORAGE_KEY='gurukull.locale.v1';
-type LocaleContextValue={locale:string;direction:'ltr'|'rtl';setLocale:(locale:string)=>void;t:(key:MessageKey)=>string};
+type LocaleContextValue={locale:string;direction:'ltr'|'rtl';setLocale:(locale:string)=>void;restoreAccountLocale:(locale:string)=>void;t:(key:MessageKey)=>string};
 const LocaleContext=createContext<LocaleContextValue|null>(null);
 
 export function readLocalePreference():string {
@@ -16,10 +17,16 @@ export function readLocalePreference():string {
 
 export const LanguageProvider:React.FC<{children:React.ReactNode}>=({children})=>{
   const [locale,setLocaleState]=useState(readLocalePreference);
+  const deviceChoice=useRef(false);
+  useEffect(()=>{try{deviceChoice.current=isAvailableLocale(localStorage.getItem(LOCALE_STORAGE_KEY)||'');}catch{/* Device storage is optional. */}},[]);
   const setLocale=useCallback((next:string)=>{
     const safe=isAvailableLocale(next)?next:DEFAULT_LOCALE;
+    deviceChoice.current=true;
     setLocaleState(safe);
     try{localStorage.setItem(LOCALE_STORAGE_KEY,safe);}catch{/* Storage is optional. */}
+  },[]);
+  const restoreAccountLocale=useCallback((next:string)=>{
+    if(!deviceChoice.current&&isAvailableLocale(next))setLocaleState(next);
   },[]);
   useEffect(()=>{
     const definition=localeDefinition(locale);
@@ -28,9 +35,9 @@ export const LanguageProvider:React.FC<{children:React.ReactNode}>=({children})=
     document.documentElement.dataset.locale=locale;
   },[locale]);
   const value=useMemo<LocaleContextValue>(()=>({
-    locale,direction:localeDefinition(locale).direction,setLocale,
-    t:(key)=>messages[locale as keyof typeof messages]?.[key]||messages.en[key],
-  }),[locale,setLocale]);
+    locale,direction:localeDefinition(locale).direction,setLocale,restoreAccountLocale,
+    t:(key)=>messages[locale as keyof typeof messages]?.[key]||interfaceText(locale,messages.en[key]),
+  }),[locale,setLocale,restoreAccountLocale]);
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 };
 
