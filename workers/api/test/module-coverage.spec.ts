@@ -16,7 +16,7 @@ import {payrollFormula, roundPayroll, calculatePayroll, type PayHead} from '../s
 import {validAccessKey, accessKeyDigest, verifyAccessKey} from '../src/admin-access.js';
 import {validMemberKey, memberKeyDigest, verifyMemberKey, generateTemporaryPassword} from '../src/member-access.js';
 import {setupRequestAllowed} from '../src/admin-access.js';
-import {DEFAULT_LOCALE_TAG,isPilotLocaleTag,isSupportedLocaleTag,localePreferenceInput,schoolLocaleSettingsInput} from '../src/locale-preferences.js';
+import {AVAILABLE_LOCALE_TAGS,DEFAULT_LOCALE_TAG,isAvailableLocaleTag,isSupportedLocaleTag,localePreferenceInput,schoolLocaleSettingsInput} from '../src/locale-preferences.js';
 
 // These are scalar and authentication-boundary tests. They intentionally do not
 // create school, student, teacher, or staff rows in any database.
@@ -140,16 +140,18 @@ describe('credential and route authorization boundaries', () => {
 });
 
 describe('language preference contracts', () => {
-  it('keeps all script-sensitive Indian locale tags distinct and exposes only reviewed pilots', () => {
+  it('keeps all script-sensitive Indian locale tags distinct and accepts all scheduled languages for the core interface', () => {
     expect(DEFAULT_LOCALE_TAG).toBe('en');
+    expect(AVAILABLE_LOCALE_TAGS).toHaveLength(23);
+    expect(schoolLocaleSettingsInput.safeParse({defaultLocale:'bn',enabledLocales:[...AVAILABLE_LOCALE_TAGS],version:0}).success).toBe(true);
     expect(isSupportedLocaleTag('ks-Arab')).toBe(true);
     expect(isSupportedLocaleTag('sd-Arab')).toBe(true);
     expect(isSupportedLocaleTag('mni-Mtei')).toBe(true);
     expect(isSupportedLocaleTag('ks')).toBe(false);
-    expect(isPilotLocaleTag('hi')).toBe(true);
-    expect(isPilotLocaleTag('bn')).toBe(false);
+    expect(isAvailableLocaleTag('hi')).toBe(true);
+    expect(isAvailableLocaleTag('bn')).toBe(true);
   });
-  it('requires an explicit selected language and versioned, reviewed school settings', () => {
+  it('requires an explicit selected language and versioned school settings', () => {
     expect(localePreferenceInput.safeParse({mode:'explicit',localeTag:'ta',version:0}).success).toBe(true);
     expect(localePreferenceInput.safeParse({mode:'explicit',localeTag:null,version:0}).success).toBe(false);
     expect(localePreferenceInput.safeParse({mode:'follow_school',localeTag:'hi',version:0}).success).toBe(false);

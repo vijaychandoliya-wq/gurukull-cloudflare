@@ -1,3 +1,4 @@
+import {interfaceText} from './interfaceText';
 export const hindiNavigation:Record<string,string>={
  Overview:'अवलोकन',People:'लोग',Students:'विद्यार्थी','Parents & guardians':'माता-पिता और अभिभावक',Teachers:'शिक्षक',Staff:'कर्मचारी',
  'Student ID cards':'विद्यार्थी पहचान पत्र','Teacher ID cards':'शिक्षक पहचान पत्र','Staff ID cards':'कर्मचारी पहचान पत्र',
@@ -19,4 +20,4 @@ Object.assign(navigationTranslations.ta,{"My profile": "எனது சுய�
 
 Object.assign(navigationTranslations.ur,{"My profile": "میری پروفائل", "Sign out": "سائن آؤٹ", "Skip to content": "مواد پر جائیں", "School administration": "اسکول انتظامیہ", "Close navigation": "نیویگیشن بند کریں", "Expand navigation": "نیویگیشن کھولیں", "Collapse navigation": "نیویگیشن سمیٹیں", "Search students": "طلبہ تلاش کریں", "Search students by name or admission…": "نام یا داخلہ نمبر سے طلبہ تلاش کریں…", "Notifications": "اطلاعات", "School": "اسکول", "Record details": "ریکارڈ کی تفصیلات", "My workspace": "میری کام کی جگہ", "My class attendance": "میری جماعت کی حاضری", "My homework": "میرا گھر کا کام", "My lesson plans": "میرے سبق کے منصوبے", "My assigned exams": "میرے تفویض کردہ امتحانات", "My quizzes": "میرے سوالنامے", "My live classes": "میری براہ راست کلاسیں", "My leave": "میری چھٹی", "My payslips": "میری تنخواہ کی پرچیاں", "My learning": "میری تعلیم", "My children’s learning": "میرے بچوں کی تعلیم"});
 
-export function navigationText(locale:string,label:string):string {return navigationTranslations[locale]?.[label] || label;}
+export function navigationText(locale:string,label:string):string {return navigationTranslations[locale]?.[label] || interfaceText(locale,label);}

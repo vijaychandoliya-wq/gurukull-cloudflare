@@ -28,7 +28,7 @@ export const antdCustomTheme = (mode: ResolvedTheme): ThemeConfig => ({
     borderRadiusLG: 14,
     controlHeight: 40,
     fontFamily:
-      'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      'Inter, "Gurukull Meetei", "Gurukull Ol Chiki", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
   components: {
     Layout: { headerBg: mode === 'dark' ? '#0a0a0a' : '#ffffff', siderBg: mode === 'dark' ? '#0a0a0a' : '#ffffff' },

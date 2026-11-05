@@ -1,3 +1,4 @@
+import {interfaceText} from './interfaceText';
 import {useLanguage} from "./LanguageProvider";
 
 const en = {
@@ -229,5 +230,5 @@ const packs: Record<string, Record<DashboardText,string>> = {en,hi,ta,ur};
 export function useDashboardText() {
   const {locale}=useLanguage();
   return (key:DashboardText,values:Record<string,string|number>={}) =>
-    (packs[locale] || en)[key].replace(/\{(\w+)\}/g, (token,name) => String(values[name] ?? token));
+    (packs[locale]?.[key] || interfaceText(locale,en[key])).replace(/\{(\w+)\}/g, (token,name) => String(values[name] ?? token));
 }

@@ -1,3 +1,7 @@
+import bnBD from 'antd/locale/bn_BD';
+import knIN from 'antd/locale/kn_IN';
+import mlIN from 'antd/locale/ml_IN';
+import neNP from 'antd/locale/ne_NP';
 import enUS from 'antd/locale/en_US';
 import hiIN from 'antd/locale/hi_IN';
 import taIN from 'antd/locale/ta_IN';
@@ -131,7 +135,7 @@ const AppRoutes: React.FC = () => {
 const ThemedApp: React.FC = () => {
   const { resolvedTheme } = useTheme();
   const {direction,locale}=useLanguage();
-  const componentLocale={en:enUS,hi:hiIN,ta:taIN,ur:urPK}[locale]||enUS;
+  const componentLocale={en:enUS,hi:hiIN,ta:taIN,ur:urPK,bn:bnBD,kn:knIN,ml:mlIN,ne:neNP}[locale]||enUS;
   return (
   <ConfigProvider theme={antdCustomTheme(resolvedTheme)} direction={direction} locale={componentLocale}>
     <AntApp>
