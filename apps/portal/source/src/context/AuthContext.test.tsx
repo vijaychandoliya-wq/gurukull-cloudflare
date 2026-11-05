@@ -26,3 +26,10 @@ it('rejects an invalid login response without retaining a prior school session',
  vi.spyOn(apiClient,'post').mockResolvedValue({data:{user:actor}});vi.spyOn(apiClient,'get').mockResolvedValue({data:{data:{}}});
  await mount();await click('[data-login]');expect(host.textContent).toContain('signed-out');expect(localStorage.getItem('gurukul_school_code')).toBeNull();
 });
+it('ignores an account-language response that arrives after sign-out',async()=>{
+ let finish:(value:unknown)=>void=()=>{};const pending=new Promise<any>(resolve=>{finish=resolve;});
+ vi.spyOn(apiClient,'post').mockResolvedValue({data:{token:'memory-token',user:actor}});
+ vi.spyOn(apiClient,'get').mockImplementation(path=>path===API.localePreferenceApi?pending:Promise.resolve({data:{data:{school:{name:'Memory school'}}}} as any));
+ await mount();await click('[data-login]');await click('[data-logout]');await act(async()=>finish({data:{data:{localeTag:'ta'}}}));
+ expect(host.textContent).toContain('signed-out');expect(host.textContent).not.toContain('|ta|');
+});

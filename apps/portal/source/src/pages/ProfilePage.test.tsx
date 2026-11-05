@@ -19,3 +19,8 @@ it('keeps the chosen device language when Profile loads and saves that choice to
  await click('Edit profile');await click('Save changes');expect(api.put).toHaveBeenCalledWith('/profile',expect.objectContaining({name:'Memory-only profile',version:1}),expect.any(Object));
  expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('hi');
 });
+it.each([new Error('Offline'),{response:{data:{message:'Profile temporarily unavailable'}}}])('keeps the selected language when profile loading fails',async error=>{
+ api.get.mockRejectedValue(error);
+ await act(async()=>root.render(<LanguageProvider><App><ProfilePage/></App></LanguageProvider>));
+ expect(host.querySelector('[role="alert"]')).toBeTruthy();expect(document.documentElement.lang).toBe('hi');expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('hi');
+});

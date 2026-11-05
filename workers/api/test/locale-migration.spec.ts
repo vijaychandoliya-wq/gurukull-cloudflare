@@ -1,7 +1,7 @@
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import {expect,it} from 'vitest';
-import {SUPPORTED_LOCALE_TAGS} from '../src/locale-preferences';
+import {SUPPORTED_LOCALE_TAGS} from '../src/locale-preferences.js';
 it('expands school language choices without changing the default or saved user preference',()=>{
  const db=new DatabaseSync(':memory:');
  try{
