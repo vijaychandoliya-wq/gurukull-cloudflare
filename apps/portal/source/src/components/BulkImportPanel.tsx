@@ -7,7 +7,7 @@ import {useAuth} from '../context/AuthContext';
 import {humanize} from '../ux/format';
 import {validateImport,importIdentity} from '../ux/importModel';
 import {useDirtyForm} from './portal/UX';
-import { en } from '../i18n/en';
+import {useCopyCatalog} from '../i18n/useCopyCatalog';
 
 type Row = Record<string, string>;
 type SheetRows = Record<string, Row[]>;
@@ -58,6 +58,7 @@ function downloadTemplate() {
 }
 
 export const BulkImportPanel: React.FC<{ onImported?: () => void }> = ({ onImported }) => {
+  const en=useCopyCatalog();
   const {schoolCode,academicYear}=useAuth();
   const [stage,setStage]=useState(0),[sourceRows,setSourceRows]=useState<SheetRows>({}),[mapping,setMapping]=useState<Record<string,string>>({}),[outcomes,setOutcomes]=useState<{sheet:string;row:number;status:string;message:string}[]>([]),[done,setDone]=useState(0),[validOnly,setValidOnly]=useState(false);
   const [rows, setRows] = useState<SheetRows>({ classes: [], sections: [], teachers: [], students: [], parents: [] });

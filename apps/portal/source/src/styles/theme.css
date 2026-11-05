@@ -40,3 +40,21 @@ body { transition: background-color 160ms ease, color 160ms ease; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* Load rare-script fonts locally only when their characters are displayed. */
+@font-face {
+  font-family: 'Gurukull Meetei';
+  src: url('/fonts/NotoSansMeeteiMayek.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+AAE0-AAFF, U+ABC0-ABFF;
+}
+@font-face {
+  font-family: 'Gurukull Ol Chiki';
+  src: url('/fonts/NotoSansOlChiki.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+1C50-1C7F;
+}

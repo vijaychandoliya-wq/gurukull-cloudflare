@@ -4,9 +4,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, App, Button, Card, Form, Input, InputNumber, Select, Space, Table, Tabs, Typography,Drawer } from 'antd';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../services/api';
-import { en } from '../i18n/en';
+import {useCopyCatalog} from '../i18n/useCopyCatalog';
 
 export const AcademicCatalogPage: React.FC = () => {
+  const en=useCopyCatalog();
   const [editor,setEditor]=useState<'subject'|'assignment'|null>(null),[dirty,setDirty]=useState(false);
   const guardClose=useDirtyForm(!!editor&&dirty);
   const [subjects, setSubjects] = useState<any[]>([]);

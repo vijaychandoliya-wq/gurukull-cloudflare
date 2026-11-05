@@ -6,10 +6,11 @@ import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../services/api';
 import { BulkImportPanel } from '../components/BulkImportPanel';
-import { en } from '../i18n/en';
+import {useCopyCatalog} from '../i18n/useCopyCatalog';
 import { useAuth } from '../context/AuthContext';
 
 export const SchoolSetupPage: React.FC<{ academics?: boolean }> = ({ academics = false }) => {
+  const en=useCopyCatalog();
   const { schoolCode } = useAuth();
   const [editor,setEditor]=useState<'year'|'class'|'section'|null>(null),[dirty,setDirty]=useState(false);
   const guardClose=useDirtyForm(!!editor&&dirty);
