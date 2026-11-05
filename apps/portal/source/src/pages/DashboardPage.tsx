@@ -108,8 +108,8 @@ export const DashboardPage: React.FC = () => {
           <Typography.Text type="secondary">{text('Current school-year records for {school}.',{school:data.school.name})}</Typography.Text>
         </div>
         <Space wrap>
-          <Button icon={<FileDoneOutlined />} onClick={() => window.location.assign('/feature-report')}>{text('Feature status')}</Button>
-          <Button type="primary" icon={<TeamOutlined />} onClick={() => window.location.assign('/students')}>{text('Manage students')}</Button>
+          <Button icon={<FileDoneOutlined />} href="/feature-report">{text('Feature status')}</Button>
+          <Button type="primary" icon={<TeamOutlined />} href="/students">{text('Manage students')}</Button>
         </Space>
       </Flex>
 
@@ -118,7 +118,7 @@ export const DashboardPage: React.FC = () => {
         showIcon
         message={data.setupNeeded ? text('Complete the school setup') : text('School setup is ready')}
         description={text('School code {code} · {year}. Attendance reflects recorded sessions; finance reflects saved invoices and collections.',{code:data.school.code,year:data.currentYear?.name||text('No current academic year')})}
-        action={data.setupNeeded ? <Button size="small" onClick={() => window.location.assign('/settings')}>{text('Open settings')}</Button> : undefined}
+        action={data.setupNeeded ? <Button size="small" href="/settings">{text('Open settings')}</Button> : undefined}
       />
 
       <Row gutter={[16, 16]}>
@@ -162,17 +162,17 @@ export const DashboardPage: React.FC = () => {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} xl={14}>
-          <Card title={text('School setup')} extra={<Button type="link" icon={<SettingOutlined />} onClick={() => window.location.assign('/settings')}>{text('Edit settings')}</Button>}>
+          <Card title={text('School setup')} extra={<Button type="link" icon={<SettingOutlined />} href="/settings">{text('Edit settings')}</Button>}>
             <List className="gk-dashboard-list" dataSource={setupRows} renderItem={([label, value]) => <List.Item><Typography.Text type="secondary">{label}</Typography.Text><Typography.Text strong>{value}</Typography.Text></List.Item>} />
           </Card>
         </Col>
         <Col xs={24} xl={10}>
           <Card title={text('Quick actions')}>
             <Space direction="vertical" size={10} style={{ width: '100%' }}>
-              <Button block icon={<TeamOutlined />} onClick={() => window.location.assign('/students')}>{text('Add or review students')}</Button>
-              <Button block icon={<ReadOutlined />} onClick={() => window.location.assign('/teachers')}>{text('Add or review teachers')}</Button>
-              <Button block icon={<CheckSquareOutlined />} onClick={() => window.location.assign('/attendance')}>{text('Record attendance')}</Button>
-              <Button block icon={<BookOutlined />} onClick={() => window.location.assign('/academics')}>{text('Manage classes and sections')}</Button>
+              <Button block icon={<TeamOutlined />} href="/students">{text('Add or review students')}</Button>
+              <Button block icon={<ReadOutlined />} href="/teachers">{text('Add or review teachers')}</Button>
+              <Button block icon={<CheckSquareOutlined />} href="/attendance">{text('Record attendance')}</Button>
+              <Button block icon={<BookOutlined />} href="/academics">{text('Manage classes and sections')}</Button>
             </Space>
           </Card>
         </Col>
