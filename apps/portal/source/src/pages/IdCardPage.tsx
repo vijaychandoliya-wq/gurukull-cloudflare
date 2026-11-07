@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Avatar,
@@ -30,6 +30,7 @@ import {
 import { apiClient, API } from '../services/api';
 import '../styles/print.css';
 import {AuthenticatedAvatar} from '../components/UserAvatar';
+import {disposeIdCardPrint,printIdCards} from './printIdCards';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -167,6 +168,10 @@ export const IdCardPage: React.FC<IdCardPageProps> = ({ variant = 'student' }) =
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const printSheet=useRef<HTMLDivElement>(null);
+  const [printing,setPrinting]=useState(false);
+  useEffect(()=>()=>disposeIdCardPrint(),[]);
+  const print=async()=>{if(!printSheet.current)return;try{setPrinting(true);setError(null);await printIdCards(printSheet.current);}catch(e){setError(e instanceof Error?e.message:'Printing could not start.');}finally{setPrinting(false);}};
 
   useEffect(() => {
     (async () => {
@@ -373,17 +378,18 @@ export const IdCardPage: React.FC<IdCardPageProps> = ({ variant = 'student' }) =
 
       <Modal
         open={previewOpen}
-        onCancel={() => setPreviewOpen(false)}
+        onCancel={() => {disposeIdCardPrint();setPreviewOpen(false);}}
         width={840}
         title="ID card preview"
         footer={[
-          <Button key="close" onClick={() => setPreviewOpen(false)}>Close</Button>,
+          <Button key="close" onClick={() => {disposeIdCardPrint();setPreviewOpen(false);}}>Close</Button>,
           <Button
             key="print"
             type="primary"
             icon={<PrinterOutlined />}
             disabled={!school||!previewStudents.length}
-            onClick={() => window.print()}
+            loading={printing}
+            onClick={()=>void print()}
           >
             Print {previewStudents.length} card(s)
           </Button>,
@@ -402,7 +408,7 @@ export const IdCardPage: React.FC<IdCardPageProps> = ({ variant = 'student' }) =
         {previewStudents.length === 0 ? (
           <Empty description={`No ${subjectLabel}s selected`} />
         ) : (
-          <div className="gk-id-print-sheet">
+          <div className="gk-id-print-sheet" ref={printSheet}>
             {school &&
               previewStudents.map((student) => (
                 <StudentIdCard key={student.id} school={school} student={student} isTeacher={isTeacher} />
