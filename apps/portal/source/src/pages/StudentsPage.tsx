@@ -1,3 +1,4 @@
+import {DirectoryDownload} from '../components/DirectoryDownload';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -254,7 +255,7 @@ export const StudentsPage: React.FC = () => {
             {loading ? 'Loading…' : `${meta.total.toLocaleString()} students`}
           </Text>
         </div>
-        <Space wrap>
+        <Space wrap><DirectoryDownload kind="students"/>
           <Button type="primary" icon={<PlusOutlined />} onClick={()=>setPersonFormOpen(true)}>New student</Button>
           <Input
             allowClear

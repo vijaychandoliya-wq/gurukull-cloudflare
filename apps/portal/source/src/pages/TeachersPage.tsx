@@ -1,3 +1,4 @@
+import {DirectoryDownload} from '../components/DirectoryDownload';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -243,7 +244,7 @@ export const TeachersPage: React.FC = () => {
             {loading ? 'Loading…' : `${meta.total.toLocaleString()} teachers`}
           </Text>
         </div>
-        <Space wrap>
+        <Space wrap><DirectoryDownload kind="teachers"/>
           <Input
             allowClear
             prefix={<SearchOutlined />}
