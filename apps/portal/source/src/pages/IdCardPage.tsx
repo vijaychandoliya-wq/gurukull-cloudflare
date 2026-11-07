@@ -267,7 +267,7 @@ export const IdCardPage: React.FC<IdCardPageProps> = ({ variant = 'student' }) =
       key: 'status',
       render: (_, record) =>
         record.readyToPrint ? (
-          <Tag color="green" icon={<CheckCircleOutlined />}>Ready to print</Tag>
+          <Tag color="green" icon={<CheckCircleOutlined />}>Details complete</Tag>
         ) : (
           <Tag color="orange" icon={<WarningOutlined />}>
             Missing {record.missingFields.join(', ')}
@@ -299,7 +299,7 @@ export const IdCardPage: React.FC<IdCardPageProps> = ({ variant = 'student' }) =
       </Flex>
 
       {error && <Alert type="error" showIcon message={error} />}
-      {!schoolReady&&<Alert type="warning" showIcon message="Save the actual school address and current academic year before final printing."/>}
+      {!schoolReady&&<Alert type="warning" showIcon message="School address or current academic year is missing. You can still print; missing information will be blank."/>}
       <Alert type="info" message="Cards use actual admission/employee numbers. Photo and school-logo uploads are separate; absent photos remain visibly blank."/>
 
       <Row gutter={[16, 16]}>
@@ -308,7 +308,7 @@ export const IdCardPage: React.FC<IdCardPageProps> = ({ variant = 'student' }) =
         </Col>
         <Col xs={12} md={8}>
           <Card>
-            <Statistic title="Ready to print" value={readyCount} valueStyle={{ color: '#16a34a' }} />
+            <Statistic title="Complete details" value={readyCount} valueStyle={{ color: '#16a34a' }} />
           </Card>
         </Col>
         <Col xs={12} md={8}>
@@ -353,7 +353,7 @@ export const IdCardPage: React.FC<IdCardPageProps> = ({ variant = 'student' }) =
             showIcon
             style={{ marginBottom: 16 }}
             message={`${incompleteCount} ${subjectLabel}(s) have incomplete card data`}
-            description={`You can still preview them, but update the ${subjectLabel} profile before final printing — missing fields print blank.`}
+            description={`You can preview and print these cards. Missing fields appear as a dash; update the ${subjectLabel} profile if you want to include them.`}
           />
         )}
 
@@ -382,7 +382,7 @@ export const IdCardPage: React.FC<IdCardPageProps> = ({ variant = 'student' }) =
             key="print"
             type="primary"
             icon={<PrinterOutlined />}
-            disabled={!schoolReady||!previewStudents.length||previewStudents.some(s=>!s.readyToPrint)}
+            disabled={!school||!previewStudents.length}
             onClick={() => window.print()}
           >
             Print {previewStudents.length} card(s)
@@ -397,6 +397,7 @@ export const IdCardPage: React.FC<IdCardPageProps> = ({ variant = 'student' }) =
           message="Print layout"
           description="The print view uses standard 85.6 × 54 mm cards, 8 per A4 sheet, and removes the admin navigation automatically."
         />
+        {previewStudents.some(s=>!s.readyToPrint)&&<Alert type="warning" showIcon style={{marginBottom:16}} message="Some card details are missing" description="You can still print. Missing details will appear as a dash."/>}
 
         {previewStudents.length === 0 ? (
           <Empty description={`No ${subjectLabel}s selected`} />
