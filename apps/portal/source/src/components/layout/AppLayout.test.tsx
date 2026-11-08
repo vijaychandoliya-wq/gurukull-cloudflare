@@ -34,3 +34,13 @@ it('keeps translated search and menu navigation usable',async()=>{
  await act(async()=>host.querySelector<HTMLButtonElement>('[aria-label="Notifications"]')!.click());
  expect(host.querySelector('.gk-breadcrumb')?.textContent).toContain('Notices');
 });
+it('keeps the navigation toggle separate from preferences and exposes its expanded state',async()=>{
+ await open();const toggle=host.querySelector<HTMLButtonElement>('.gk-navigation-toggle')!;
+ expect(toggle.closest('.gk-header-navigation')).not.toBeNull();
+ expect(toggle.closest('.gk-header-preferences')).toBeNull();
+ expect(host.querySelector('[data-language]')?.closest('.gk-header-preferences')).not.toBeNull();
+ expect(toggle.getAttribute('aria-controls')).toBe('school-navigation');
+ expect(toggle.getAttribute('aria-expanded')).toBe('true');
+ await act(async()=>toggle.click());expect(toggle.getAttribute('aria-expanded')).toBe('false');
+ await act(async()=>toggle.click());expect(toggle.getAttribute('aria-expanded')).toBe('true');
+});

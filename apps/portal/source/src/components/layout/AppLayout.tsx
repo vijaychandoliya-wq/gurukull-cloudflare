@@ -115,6 +115,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         breakpoint="lg"
         onBreakpoint={matches=>setCollapsed(matches)}
         className="gk-sider"
+        id="school-navigation"
       >
         <div className="gk-brand">
           <Avatar
@@ -155,12 +156,15 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           className="gk-header"
         >
           <div className="gk-header-inner">
-          <Space>
+          <div className="gk-header-navigation">
             <Button
+              className="gk-navigation-toggle"
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               onClick={() => setCollapsed((c) => !c)}
               aria-label={text(collapsed ? 'Expand navigation' : 'Collapse navigation')}
+              aria-expanded={!collapsed}
+              aria-controls="school-navigation"
             />
             {hasRole('schooladmin','superadmin')&&<Input
               aria-label={text('Search students')}
@@ -172,11 +176,13 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 if (q) navigateSafely(`/students?q=${encodeURIComponent(q)}`);
               }}
             />}
-          </Space>
+          </div>
 
-          <Space size="middle">
+          <div className="gk-header-preferences">
             <ThemeSwitcher compact />
             <LanguageSwitcher compact />
+          </div>
+          <div className="gk-header-account">
 
               <Button type="text" shape="circle" icon={<NotificationOutlined />} onClick={() => navigateSafely('/notices')} aria-label={text('Notifications')} />
 
@@ -190,7 +196,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 </span>
               </Button>
             </Dropdown>
-          </Space>
+          </div>
           </div>
         </Header>
 
