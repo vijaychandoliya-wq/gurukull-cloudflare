@@ -60,10 +60,11 @@ html[dir='rtl'] .gk-login-appearance { left: 28px; right: auto; }
 .gk-brand-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.4; }
 .gk-header { position: sticky; top: 0; z-index: 20; height: 76px; padding: 0 24px; border-bottom: 1px solid #eaecf0; overflow: visible; }
 .gk-header-inner { height: 100%; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.gk-header-inner > .ant-space { min-width: 0; }
-.gk-header-inner > .ant-space:first-child { flex: 1 1 auto; }
-.gk-header-inner > .ant-space:first-child > .ant-space-item:last-child { min-width: 0; flex: 1 1 auto; }
-.gk-header-inner > .ant-space:last-child { flex: 0 1 auto; justify-content: flex-end; }
+.gk-header-navigation { display:flex; align-items:center; gap:12px; flex:1 1 auto; min-width:0; }
+.gk-navigation-toggle.ant-btn { flex:0 0 44px; width:44px; height:44px; }
+.gk-header-navigation .gk-global-search { flex:1 1 auto; }
+.gk-header-preferences,.gk-header-account { display:flex; align-items:center; gap:12px; flex:0 0 auto; }
+.gk-header-account .ant-tag { margin-inline-end:0; }
 .gk-global-search { width: min(520px, 36vw); min-width: 220px; }
 .gk-profile-button { height: auto; padding: 4px 8px; }
 .gk-profile-copy { display: inline-flex; max-width: 180px; flex-direction: column; text-align: left; line-height: 1.25; }
@@ -437,3 +438,14 @@ html[dir='rtl'] .gk-login-appearance { left: 28px; right: auto; }
 .gk-login-page.gk-platform-login{display:flex;align-items:center;justify-content:center;min-height:100dvh;}
 .gk-platform-login .gk-login-form-panel{flex:1;max-width:720px;padding:32px;}
 @media(max-width:767px){.gk-platform-header{height:auto;min-height:64px;line-height:normal;flex-wrap:wrap;gap:12px;padding:16px!important}.gk-platform-header>.ant-space{flex-wrap:wrap}.gk-platform-login .gk-login-form-panel{padding:24px 16px}}
+
+/* Keep navigation independent from preferences on small screens. */
+@media(max-width:767px){
+ .gk-header { height:auto; min-height:112px; line-height:normal; padding:8px 12px; }
+ .gk-header-inner { display:grid; grid-template-columns:44px minmax(0,1fr); gap:8px 12px; }
+ .gk-header-navigation { grid-column:1; grid-row:1; }
+ .gk-header-account { grid-column:2; grid-row:1; justify-content:flex-end; gap:8px; min-width:0; }
+ .gk-header-preferences { grid-column:1 / -1; grid-row:2; justify-content:space-between; gap:12px; min-width:0; }
+ .gk-header-account > .ant-btn,.gk-header-account .gk-profile-button { min-width:44px; min-height:44px; padding:4px; }
+ .gk-header-preferences .ant-segmented-item-label { min-height:36px; display:flex; align-items:center; justify-content:center; }
+}
