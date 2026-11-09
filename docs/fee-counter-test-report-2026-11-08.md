@@ -74,3 +74,9 @@ The default repository coverage manifest selects older files explicitly and curr
 ## Remaining later capabilities
 
 Combined payments/receipts across several invoices, concession-only commands, selected-student/optional-service eligibility, multiple fee lines/installments, past-year collection selection, standalone downloadable PDF generation, dedicated cashier/approval roles, daily/method/collector/class reports, bank/day-close reconciliation, cheque clearance, advances, refunds and reminder delivery remain later stages. They require actual school policy and backend lifecycle work, and are not shown as supported controls here. Core labels use the existing localization lookup with additional Hindi copy; all new explanatory text has not been translated into every supported language.
+
+## Follow-up — 9 November 2026
+
+The mobile header was released independently in main commit `ab8008d`; its four school/app domains were checked again and return that SHA. Browser control still reports disabled in Work settings.
+
+The fee draft is rebased by merge on the released main. Its CSV protection now scans leading control bytes by numeric character code rather than a regex control-character range flagged by SonarQube rule S6324. The focused fee suite passes 8 tests, including a new case covering NUL, unit separator, tab, carriage return, Unicode whitespace and ordinary quoted text. Worker TypeScript and whitespace checks pass. This update does not establish a new successful SonarQube gate or full financial acceptance; the fee draft is still not deployed. The previous exact-commit gate measured new-code coverage at 53.2% versus a required 80%.

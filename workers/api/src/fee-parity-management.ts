@@ -34,7 +34,13 @@ export function feeCsv(rows:Record<string,unknown>[],display=false){
  const keys=['invoiceNo','studentName','admissionNo','className','feeName','amountMinor','paidMinor','concessionMinor','balanceMinor','dueDate','status'];
  if(display)keys.splice(5,0,'currency');
  const labels:Record<string,string>={invoiceNo:'Invoice number',studentName:'Student',admissionNo:'Admission number',className:'Class',feeName:'Fee',currency:'Currency',amountMinor:'Amount',paidMinor:'Paid',concessionMinor:'Concession',balanceMinor:'Balance',dueDate:'Due date',status:'Status'};
- const quote=(v:unknown)=>{const text=String(v??'');return '\"'+(/^[\t\r]/.test(text)||/^[\s\u0000-\u001f]*[=+@-]/.test(text)?"'"+text:text).replaceAll('\"','\"\"')+'\"';};
+ const quote=(v:unknown)=>{
+  const text=String(v??'');let first=0;
+  while(first<text.length&&(text.charCodeAt(first)<=32||/\s/u.test(text[first])))first++;
+  const formula=first<text.length&&'=+@-'.includes(text[first]);
+  const unsafe=text.charCodeAt(0)===9||text.charCodeAt(0)===13||formula;
+  return '"'+(unsafe?"'"+text:text).replaceAll('"','""')+'"';
+ };
  return (display?'\ufeff':'')+[keys.map(k=>quote(display?labels[k]:k)).join(','),...rows.map(r=>keys.map(k=>quote(display&&k.endsWith('Minor')?(Number(r[k])/10**(new Intl.NumberFormat('en',{style:'currency',currency:String(r.currency)}).resolvedOptions().maximumFractionDigits??2)).toFixed(new Intl.NumberFormat('en',{style:'currency',currency:String(r.currency)}).resolvedOptions().maximumFractionDigits??2):r[k])).join(','))].join('\r\n');
 }
 

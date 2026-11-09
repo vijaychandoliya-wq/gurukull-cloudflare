@@ -45,3 +45,11 @@ describe('fee counter read boundaries',()=>{
   expect(feePaymentInput.safeParse({...body,paymentMode:'upi'}).success).toBe(false);
  });
 });
+
+it('neutralizes formulas after leading whitespace or control bytes and preserves ordinary quoted text',()=>{
+ for(const prefix of [' ',String.fromCharCode(0),String.fromCharCode(31),'\t','\r','\u2003']){
+  const text=prefix+'=SUM(1,2)';expect(feeCsv([{studentName:text}])).toContain('"\''+text+'"');
+ }
+ expect(feeCsv([{studentName:'Ordinary "quoted" name'}])).toContain('"Ordinary ""quoted"" name"');
+ expect(feeCsv([{studentName:null}])).not.toContain('undefined');
+});
