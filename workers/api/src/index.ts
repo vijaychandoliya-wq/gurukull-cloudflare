@@ -29,6 +29,7 @@ import {registerMemberAccess} from './member-access.js';
 import {registerPeopleManagement} from './people-management.js';
 import {registerSchoolManagement} from './school-management.js';
 import {registerFeeManagement} from './fee-management.js';
+import {registerFeeCounter} from './fee-counter.js';
 import {registerFeeParityManagement} from './fee-parity-management.js';
 import {registerIdCardManagement} from './idcard-management.js';
 import {registerEmailDeliveryStatus, scheduledEmailDispatcher} from './email-delivery.js';
@@ -141,7 +142,7 @@ const fees=async(c:ApiContext)=>{
 app.on('GET',['/api/v2/fees/:studentId','/api/v2/fees/paid/:studentId','/api/v2/fees/unpaid/:studentId','/v2/fees/paid/:studentId','/v2/fees/unpaid/:studentId'],requireAuth,fees);
 app.on('GET',['/api/v2/notices','/api/v2/my-school/notices','/v2/my-school/notices','/api/teacher/my-school/notices','/api/portal/notices'],requireAuth,c=>{if(c.req.path.includes('/teacher/'))requireRole(c,'teacher','admin');return memberNotices(c);});
 registerPayrollManagement(app);registerLiveClassManagement(app);registerQuizManagement(app);registerTransportManagement(app);registerStudentLifecycle(app);registerCertificateManagement(app);registerLibraryManagement(app);registerDisciplineManagement(app);registerExamManagement(app);registerInventoryManagement(app);registerReceptionManagement(app);registerLeaveManagement(app);registerStudentWorkspace(app);registerPortalAttendance(app);registerParentManagement(app);registerNoticeManagement(app);registerAcademicWork(app);
-registerAcademicManagement(app);registerProfileManagement(app);registerLocalePreferences(app);registerMemberWorkspace(app);registerMemberAccess(app);registerPeopleManagement(app);registerAvatarManagement(app);registerSchoolManagement(app);registerAdmin(app);registerEnrollment(app);registerAttendance(app);registerSync(app);registerStorage(app);registerFeeManagement(app);registerFeeParityManagement(app);registerIdCardManagement(app);
+registerAcademicManagement(app);registerProfileManagement(app);registerLocalePreferences(app);registerMemberWorkspace(app);registerMemberAccess(app);registerPeopleManagement(app);registerAvatarManagement(app);registerSchoolManagement(app);registerAdmin(app);registerEnrollment(app);registerAttendance(app);registerSync(app);registerStorage(app);registerFeeManagement(app);registerFeeParityManagement(app);registerFeeCounter(app);registerIdCardManagement(app);
 registerEmailDeliveryStatus(app);
 app.notFound(async (c) => {
   const assets = (c.env as any)?.ASSETS;

@@ -57,6 +57,8 @@ export function setupRequestAllowed(method:string,path:string) {
  if(method==='GET'&&['/api/portal/student-exams','/api/portal/exam-results','/api/portal/student-fees'].includes(path))return true;
  if(method==='GET'&&['/api/admin/id-cards/options','/api/admin/id-cards/students','/api/admin/teacher-id-cards/students','/api/admin/staff-id-cards/students','/api/admin/fees/groups','/api/admin/fees/invoices','/api/admin/fees/policy','/api/admin/fees/form-options','/api/admin/fees/receipts'].includes(path))return true;
  if(method==='GET'&&/^\/api\/admin\/fees\/(receipts|invoices)\/[A-Za-z0-9_-]+$/.test(path))return true;
+ if(method==='GET'&&/^\/api\/admin\/fees\/counter\/(context|students|students\/[A-Za-z0-9_-]+|commands\/[A-Za-z0-9_-]+)$/.test(path))return true;
+ if(method==='GET'&&/^\/api\/admin\/fees\/structures\/[A-Za-z0-9_-]+\/assignment-preview$/.test(path))return true;
  if(method==='PUT'&&path==='/api/admin/fees/policy')return true;
  if(method==='POST'&&['/api/admin/fees/groups','/api/admin/fees/invoices','/api/admin/fees/payments'].includes(path))return true;
  if(method==='POST'&&/^\/api\/admin\/fees\/(invoices\/[A-Za-z0-9_-]+\/cancel|receipts\/[A-Za-z0-9_-]+\/reverse)$/.test(path))return true;
