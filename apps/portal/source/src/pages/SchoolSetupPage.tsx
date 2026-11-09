@@ -1,7 +1,8 @@
 import {useDirtyForm} from '../components/portal/UX';
 import {ModuleTabs} from '../components/portal/ModuleTabs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, App, Button, Card, Checkbox, Form, Input, InputNumber, Select, Space, Table, Tabs, Typography,Drawer,Modal } from 'antd';
+import {Alert,App,Button,Card,Checkbox,Form,Input,InputNumber,Select,Space,Tabs,Typography,Drawer,Modal} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../services/api';

@@ -1,6 +1,7 @@
 import {humanize,displayValue} from '../ux/format';
 import {useEffect,useRef,useState} from 'react';
-import {Alert,Button,Card,Table} from 'antd';
+import {Alert,Button,Card} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import {apiClient} from '../services/api';
 import {useAuth} from '../context/AuthContext';
 export function StudentConduct({studentId}:{studentId:string}){

@@ -2,7 +2,8 @@ import {ModuleTabs} from '../components/portal/ModuleTabs';
 import {useDirtyForm} from '../components/portal/UX';
 import dayjs from 'dayjs';
 import React,{useEffect,useRef,useState} from 'react';
-import {Alert,App,Button,Card,DatePicker,Form,Input,Select,Space,Table,Typography} from 'antd';
+import {Alert,App,Button,Card,DatePicker,Form,Input,Select,Space,Typography} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import {apiClient} from '../services/api';
 import {useAuth} from '../context/AuthContext';
 export const AttendanceManagementPage:React.FC=()=>{

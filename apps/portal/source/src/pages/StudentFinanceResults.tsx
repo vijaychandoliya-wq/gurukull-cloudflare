@@ -1,6 +1,7 @@
 import {displayValue,humanize} from '../ux/format';
 import React,{useEffect,useState} from 'react';
-import {Alert,Button,Card,Descriptions,Select,Space,Table,Typography} from 'antd';
+import {Alert,Button,Card,Descriptions,Select,Space,Typography} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import {apiClient} from '../services/api';
 export const StudentFinanceResults:React.FC<{studentId:string}>=({studentId})=>{
  const [fees,setFees]=useState<any[]>([]),[feePage,setFeePage]=useState(1),[feeTotal,setFeeTotal]=useState(0),[exams,setExams]=useState<any[]>([]),[result,setResult]=useState<any>(),[feeError,setFeeError]=useState(''),[examError,setExamError]=useState('');

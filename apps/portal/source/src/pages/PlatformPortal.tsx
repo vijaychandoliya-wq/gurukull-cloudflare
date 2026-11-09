@@ -1,7 +1,8 @@
 import {PasswordChangeForm} from '../components/PasswordChangeForm';
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Alert, App, Button, Card, Descriptions, Form, Input, Layout, Modal, Select, Space, Table, Tag, Typography,Tabs } from 'antd';
+import {Alert,App,Button,Card,Descriptions,Form,Input,Layout,Modal,Select,Space,Tag,Typography,Tabs} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import { BankOutlined, CheckCircleOutlined, HistoryOutlined, LogoutOutlined, PlusOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import {humanize} from '../ux/format';
 import { ThemeSwitcher } from '../components/ThemeSwitcher';
