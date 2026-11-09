@@ -1,5 +1,6 @@
 import {useEffect,useState} from 'react';
-import {Alert,Button,Card,Space,Table,Tag,Typography} from 'antd';
+import {Alert,Button,Card,Space,Tag,Typography} from 'antd';
+import {Table} from '../export/ExportTable';
 import {apiClient} from '../../services/api';
 import {displayValue,humanize} from '../../ux/format';
 export function DeliveryActivity(){

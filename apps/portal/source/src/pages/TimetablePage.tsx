@@ -1,26 +1,9 @@
+import {TablePdfPanel} from '../components/export/ExportTable';
 import {ModuleTabs} from '../components/portal/ModuleTabs';
 import {useDirtyForm} from '../components/portal/UX';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  App as AntApp,
-  Button,
-  Card,
-  Empty,
-  Flex,
-  Form,
-  Input,
-  InputNumber,
-  Table,
-  Modal,
-  Popconfirm,
-  Select,
-  Space,
-  Spin,
-  Tag,
-  TimePicker,
-  Typography,
-} from 'antd';
+import {Alert,App as AntApp,Button,Card,Empty,Flex,Form,Input,InputNumber,Modal,Popconfirm,Select,Space,Spin,Tag,TimePicker,Typography} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import {Link} from 'react-router-dom';
@@ -270,7 +253,7 @@ export const TimetablePage: React.FC = () => {
           <Empty description="Select a class to build its timetable" />
         ) : (
           <div className="gk-timetable-desktop" style={{ overflowX: 'auto' }}>
-            <table className="gk-timetable-grid" style={{ borderCollapse: 'collapse', width: '100%', minWidth: 760 }}>
+            <TablePdfPanel><table className="gk-timetable-grid" style={{ borderCollapse: 'collapse', width: '100%', minWidth: 760 }}>
               <thead>
                 <tr>
                   <th style={{ ...cellBase, background: 'var(--gk-surface-inset)', width: 90 }}>Period</th>
@@ -337,7 +320,7 @@ export const TimetablePage: React.FC = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></TablePdfPanel>
           </div>
         )}
         {loading && <div style={{ padding: 12 }}><Spin /></div>}

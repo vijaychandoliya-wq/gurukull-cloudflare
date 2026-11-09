@@ -1,20 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  Button,
-  Card,
-  Col,
-  Empty,
-  Flex,
-  Modal,
-  Row,
-  Select,
-  Space,
-  Statistic,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
+import {Alert,Button,Card,Col,Empty,Flex,Modal,Row,Select,Space,Statistic,Tag,Typography} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import type { ColumnsType } from 'antd/es/table';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftOutlined, PrinterOutlined, FileTextOutlined } from '@ant-design/icons';

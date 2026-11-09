@@ -1,5 +1,6 @@
 import React,{useCallback,useEffect,useState} from 'react';
-import {Alert,Button,Card,Table,Tag} from 'antd';
+import {Alert,Button,Card,Tag} from 'antd';
+import {Table} from './export/ExportTable';
 import {apiClient} from '../services/api';
 
 type Draft={id:string;recipientName:string;recipientPhone:string;purpose:string;locale:string;templateVersion:number;createdAt:number};

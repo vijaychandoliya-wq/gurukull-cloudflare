@@ -1,23 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  Avatar,
-  Button,
-  Card,
-  Col,
-  Empty,
-  Flex,
-  Input,
-  Modal,
-  Row,
-  Select,
-  Skeleton,
-  Space,
-  Statistic,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
+import {Alert,Avatar,Button,Card,Col,Empty,Flex,Input,Modal,Row,Select,Skeleton,Space,Statistic,Tag,Typography} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import type { ColumnsType } from 'antd/es/table';
 import {
   CheckCircleOutlined,
