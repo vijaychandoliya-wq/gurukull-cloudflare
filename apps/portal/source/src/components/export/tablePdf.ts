@@ -1,7 +1,7 @@
 export type TableSnapshot={headers:string[];rows:string[][]};
 let activeFrame:HTMLIFrameElement|undefined;
 export function disposeTablePdf(){activeFrame?.remove();activeFrame=undefined;}
-function text(cell:Element){const copy=cell.cloneNode(true) as Element;copy.querySelectorAll('svg,img,input,.ant-table-column-sorter,.ant-table-filter-trigger').forEach(n=>n.remove());return (copy.textContent||'').replace(/\s+/g,' ').trim();}
+function text(cell:Element){const copy=cell.cloneNode(true) as Element;copy.querySelectorAll('svg,img,input,.ant-avatar,.gk-avatar,.ant-table-column-sorter,.ant-table-filter-trigger').forEach(n=>n.remove());return (copy.textContent||'').replace(/\s+/g,' ').trim();}
 function grid(rows:HTMLTableRowElement[]){
  const result:string[][]=[];
  rows.forEach((row,r)=>{result[r]??=[];let col=0;Array.from(row.cells).forEach(cell=>{while(result[r][col]!==undefined)col++;const value=text(cell);for(let y=0;y<Math.min(cell.rowSpan||1,rows.length-r);y++){result[r+y]??=[];for(let x=0;x<(cell.colSpan||1);x++)result[r+y][col+x]=value;}col+=cell.colSpan||1;});});return result;

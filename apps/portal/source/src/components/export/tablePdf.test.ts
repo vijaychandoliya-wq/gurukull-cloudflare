@@ -3,7 +3,7 @@ import {afterEach,expect,it,vi} from 'vitest';
 import {snapshotTable,printTablePdf,disposeTablePdf} from './tablePdf';
 afterEach(()=>{disposeTablePdf();document.body.innerHTML='';vi.restoreAllMocks();});
 it('exports visible data columns and excludes selection and actions without changing source rows',()=>{
- const root=document.createElement('div');root.innerHTML='<table><thead><tr><th class="ant-table-selection-column"><input type="checkbox"></th><th>Name</th><th>Balance</th><th>Actions</th></tr></thead><tbody><tr><td><input type="checkbox"></td><td>Long नाम &amp; name</td><td>₹1,234.00</td><td><button>Edit</button></td></tr></tbody></table>';const original=root.innerHTML;
+ const root=document.createElement('div');root.innerHTML='<table><thead><tr><th class="ant-table-selection-column"><input type="checkbox"></th><th>Name</th><th>Balance</th><th>Actions</th></tr></thead><tbody><tr><td><input type="checkbox"></td><td><span class="ant-avatar">XY</span>Long नाम &amp; name</td><td>₹1,234.00</td><td><button>Edit</button></td></tr></tbody></table>';const original=root.innerHTML;
  expect(snapshotTable(root)).toEqual({headers:['Name','Balance'],rows:[['Long नाम & name','₹1,234.00']]});expect(root.innerHTML).toBe(original);
 });
 it('flattens grouped headers and retains values from row-spanned cells',()=>{
