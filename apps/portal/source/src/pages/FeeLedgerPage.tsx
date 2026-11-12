@@ -4,8 +4,9 @@ import {ModuleTabs} from '../components/portal/ModuleTabs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert, App, Badge, Button, Card, Collapse, DatePicker, Divider, Drawer, Empty, Flex, Form, Input, InputNumber,
-  Popconfirm, Row, Col, Select, Space, Statistic, Table, Tabs, Tag, Tooltip, Typography, Descriptions, Skeleton,
+  Popconfirm, Row, Col, Select, Space, Statistic, Tabs, Tag, Tooltip, Typography, Descriptions, Skeleton,
 } from 'antd';
+import {Table} from '../components/export/ExportTable';
 import {
   AuditOutlined, DownloadOutlined, FileAddOutlined, FileDoneOutlined, PlusOutlined, ReloadOutlined,
   SettingOutlined, WalletOutlined,

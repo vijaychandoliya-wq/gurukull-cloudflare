@@ -3,6 +3,8 @@ import { digest, fail, verifyJwt, type Claims } from './security.js';
 import { setupRequestAllowed } from './admin-access.js';
 
 export interface Env extends Partial<ApiBindings> {
+  // Existing Static Assets binding, omitted by this Wrangler version's generated declaration.
+  ASSETS?: Fetcher;
   APP_RELEASE?: string;
   SOURCE_SHA?: string;
   EMAIL_DELIVERY_ENABLED?: string;

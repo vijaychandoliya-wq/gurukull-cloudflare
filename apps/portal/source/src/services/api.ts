@@ -1,3 +1,4 @@
+import {attachExportSource} from '../components/export/exportSource';
 import axios from 'axios';
 
 export const API_BASE_URL =
@@ -46,7 +47,7 @@ apiClient.interceptors.request.use((config) => {
 });
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => attachExportSource(response,apiClient),
   (error) => {
     if (error.response?.status === 401 && !window.location.pathname.startsWith('/login')) {
       clearPortalSession();

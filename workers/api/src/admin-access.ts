@@ -54,6 +54,7 @@ export function setupRequestAllowed(method:string,path:string) {
  if(method==='POST'&&/^\/api\/admin\/exams\/[A-Za-z0-9_-]+\/publish$/.test(path))return true;
  if(method==='GET'&&/^\/api\/admin\/exams\/[A-Za-z0-9_-]+\/results$/.test(path))return true;
  if(['GET','POST'].includes(method)&&/^\/api\/admin\/exam-schedules\/[A-Za-z0-9_-]+\/marks$/.test(path))return true;
+ if((method==='GET'&&/^\/api\/exports(?:\/[A-Za-z0-9_-]+(?:\/download)?)?$/.test(path))||(method==='POST'&&/^\/api\/exports(?:\/[A-Za-z0-9_-]+\/continue)?$/.test(path)))return true;
  if(method==='GET'&&['/api/portal/student-exams','/api/portal/exam-results','/api/portal/student-fees'].includes(path))return true;
  if(method==='GET'&&['/api/admin/id-cards/options','/api/admin/id-cards/students','/api/admin/teacher-id-cards/students','/api/admin/staff-id-cards/students','/api/admin/fees/groups','/api/admin/fees/invoices','/api/admin/fees/policy','/api/admin/fees/form-options','/api/admin/fees/receipts'].includes(path))return true;
  if(method==='GET'&&/^\/api\/admin\/fees\/(receipts|invoices)\/[A-Za-z0-9_-]+$/.test(path))return true;

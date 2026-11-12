@@ -1,3 +1,5 @@
+import {registerRecordExports} from './exports/routes.js';
+import {processExportJob,expireExports} from './exports/jobs.js';
 import {registerPasswordManagement} from './password-management.js';
 import {registerWhatsAppConnection} from './whatsapp-connection.js';
 import {registerWhatsAppTemplates} from './whatsapp-templates.js';
@@ -143,6 +145,7 @@ app.on('GET',['/api/v2/notices','/api/v2/my-school/notices','/v2/my-school/notic
 registerPayrollManagement(app);registerLiveClassManagement(app);registerQuizManagement(app);registerTransportManagement(app);registerStudentLifecycle(app);registerCertificateManagement(app);registerLibraryManagement(app);registerDisciplineManagement(app);registerExamManagement(app);registerInventoryManagement(app);registerReceptionManagement(app);registerLeaveManagement(app);registerStudentWorkspace(app);registerPortalAttendance(app);registerParentManagement(app);registerNoticeManagement(app);registerAcademicWork(app);
 registerAcademicManagement(app);registerProfileManagement(app);registerLocalePreferences(app);registerMemberWorkspace(app);registerMemberAccess(app);registerPeopleManagement(app);registerAvatarManagement(app);registerSchoolManagement(app);registerAdmin(app);registerEnrollment(app);registerAttendance(app);registerSync(app);registerStorage(app);registerFeeManagement(app);registerFeeParityManagement(app);registerIdCardManagement(app);
 registerEmailDeliveryStatus(app);
+registerRecordExports(app,async(request,env)=>await app.fetch(request,env));
 app.notFound(async (c) => {
   const assets = (c.env as any)?.ASSETS;
   if (assets && !c.req.path.startsWith('/api/') && !c.req.path.startsWith('/v2/')) {
@@ -159,4 +162,4 @@ app.onError((err,c)=>{
   return c.json({error:'SERVICE_UNAVAILABLE',requestId:c.get('requestId')},503);
 });
 // Keep Hono as the fetch handler and add the scheduled outbox drain for Workers.
-export default Object.assign(app, {scheduled: scheduledEmailDispatcher});
+export default Object.assign(app, {scheduled: async (controller:ScheduledController,env:import('./context.js').Env,ctx:ExecutionContext)=>{await scheduledEmailDispatcher(controller,env,ctx);await processExportJob(env);await expireExports(env);}});

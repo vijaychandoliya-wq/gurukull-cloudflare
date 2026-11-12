@@ -253,7 +253,7 @@ export const TimetablePage: React.FC = () => {
           <Empty description="Select a class to build its timetable" />
         ) : (
           <div className="gk-timetable-desktop" style={{ overflowX: 'auto' }}>
-            <TablePdfPanel><table className="gk-timetable-grid" style={{ borderCollapse: 'collapse', width: '100%', minWidth: 760 }}>
+            <TablePdfPanel exportSource={{path:withId(API.timetableGridApi,standardLinkId||''),query:{},arrayPath:['data']}}><table className="gk-timetable-grid" style={{ borderCollapse: 'collapse', width: '100%', minWidth: 760 }}>
               <thead>
                 <tr>
                   <th style={{ ...cellBase, background: 'var(--gk-surface-inset)', width: 90 }}>Period</th>
