@@ -28,6 +28,10 @@ export interface Env extends Partial<ApiBindings> {
   WHATSAPP_GRAPH_API_URL?: string;
   WHATSAPP_PHONE_NUMBER_ID?: string;
   WHATSAPP_PASSWORD_TEMPLATE?: string;
+  // Provider-approved template used for fee reminders; empty until the owner
+  // stores the Meta-approved template name. Reminders queue regardless and
+  // surface as provider_not_configured until it is set.
+  WHATSAPP_FEE_TEMPLATE?: string;
   WHATSAPP_TEMPLATE_LANGUAGE?: string;
   WHATSAPP_ACCESS_TOKEN?: string;
   WHATSAPP_DEFAULT_COUNTRY_CODE?: string;

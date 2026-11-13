@@ -116,18 +116,9 @@ export function registerFeeParityManagement(app: Hono<AppEnv>) {
     return c.json(await command(c,'fee.manual_balance',v,()=>writes,{message:'Opening balance recorded with an auditable invoice.',data:{invoiceId,structureId}}),201);
   });
 
-  app.post('/api/admin/fees/reminders', requireAuth, async c => {
-    requireRole(c, 'admin');
-    parse(reminderInput, await readBody(c));
-    fail(503, 'FEE_REMINDER_DELIVERY_UNAVAILABLE', 'Fee reminder delivery is not available yet. No reminder was queued or sent.');
-  });
-  app.get('/api/admin/fees/reminders', requireAuth, async c => { const u=requireRole(c,'admin'); const rows=await db(c).prepare(`SELECT r.id,r.invoice_id AS invoiceId,r.channel,r.recipient,'delivery_unverified' AS status,r.status AS legacyStatus,r.message,r.created_at AS createdAt,NULL AS sentAt,u.full_name AS studentName FROM fee_reminders r JOIN students s ON s.id=r.student_id AND s.school_id=r.school_id JOIN users u ON u.id=s.user_id AND u.school_id=s.school_id WHERE r.school_id=? ORDER BY r.created_at DESC LIMIT 500`).bind(u.school_id).all(); return c.json({data:rows.results}); });
-  app.get('/api/admin/fees/reminders/summary', requireAuth, async c => { const u=requireRole(c,'admin'); const row=await db(c).prepare(`SELECT COUNT(*) AS total,COALESCE(SUM(CASE WHEN status='provider_not_configured' THEN 1 ELSE 0 END),0) AS providerNotConfigured,COALESCE(SUM(CASE WHEN created_at>unixepoch()-86400 THEN 1 ELSE 0 END),0) AS last24Hours FROM fee_reminders WHERE school_id=?`).bind(u.school_id).first(); return c.json({data:row||{total:0,providerNotConfigured:0,last24Hours:0}}); });
-  app.post('/api/admin/fees/structures/:id/remind-all', requireAuth, async c => {
-    requireRole(c, 'admin');
-    parse(z.object({channel:z.enum(['whatsapp','email','sms']).default('whatsapp'),message:optionalText(1000)}).strict(), await readBody(c));
-    fail(503, 'FEE_REMINDER_DELIVERY_UNAVAILABLE', 'Fee reminder delivery is not available yet. No reminders were queued or sent.');
-  });
+  // Fee-reminder queueing, dry-run, history, summary and retry now live in
+  // fee-reminders.ts (registerFeeReminders). The legacy 503 stubs were removed:
+  // reminders queue for real, and every delivery outcome is recorded honestly.
 
   app.post('/api/admin/fees/invoices/:id/adjust', requireAuth, async c => {
     const u = requireRole(c, 'admin'); const body = await readBody(c); const v = parse(feeAdjustmentInput, { ...body, invoiceId: c.req.param('id') });
