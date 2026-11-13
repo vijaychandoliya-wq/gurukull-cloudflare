@@ -35,6 +35,7 @@ import {registerFeeParityManagement} from './fee-parity-management.js';
 import {registerIdCardManagement} from './idcard-management.js';
 import {registerEmailDeliveryStatus, scheduledEmailDispatcher} from './email-delivery.js';
 import {registerFeeReminders,processFeeReminders} from './fee-reminders.js';
+import {registerFeeDemand} from './fee-demand.js';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { DeviceRegisterRequestSchema } from '@gurukul/domain';
@@ -144,7 +145,7 @@ const fees=async(c:ApiContext)=>{
 app.on('GET',['/api/v2/fees/:studentId','/api/v2/fees/paid/:studentId','/api/v2/fees/unpaid/:studentId','/v2/fees/paid/:studentId','/v2/fees/unpaid/:studentId'],requireAuth,fees);
 app.on('GET',['/api/v2/notices','/api/v2/my-school/notices','/v2/my-school/notices','/api/teacher/my-school/notices','/api/portal/notices'],requireAuth,c=>{if(c.req.path.includes('/teacher/'))requireRole(c,'teacher','admin');return memberNotices(c);});
 registerPayrollManagement(app);registerLiveClassManagement(app);registerQuizManagement(app);registerTransportManagement(app);registerStudentLifecycle(app);registerCertificateManagement(app);registerLibraryManagement(app);registerDisciplineManagement(app);registerExamManagement(app);registerInventoryManagement(app);registerReceptionManagement(app);registerLeaveManagement(app);registerStudentWorkspace(app);registerPortalAttendance(app);registerParentManagement(app);registerNoticeManagement(app);registerAcademicWork(app);
-registerAcademicManagement(app);registerProfileManagement(app);registerLocalePreferences(app);registerMemberWorkspace(app);registerMemberAccess(app);registerPeopleManagement(app);registerAvatarManagement(app);registerSchoolManagement(app);registerAdmin(app);registerEnrollment(app);registerAttendance(app);registerSync(app);registerStorage(app);registerFeeManagement(app);registerFeeParityManagement(app);registerFeeReminders(app);registerIdCardManagement(app);
+registerAcademicManagement(app);registerProfileManagement(app);registerLocalePreferences(app);registerMemberWorkspace(app);registerMemberAccess(app);registerPeopleManagement(app);registerAvatarManagement(app);registerSchoolManagement(app);registerAdmin(app);registerEnrollment(app);registerAttendance(app);registerSync(app);registerStorage(app);registerFeeManagement(app);registerFeeParityManagement(app);registerFeeReminders(app);registerFeeDemand(app);registerIdCardManagement(app);
 registerEmailDeliveryStatus(app);
 registerRecordExports(app,async(request,env)=>await app.fetch(request,env));
 app.notFound(async (c) => {

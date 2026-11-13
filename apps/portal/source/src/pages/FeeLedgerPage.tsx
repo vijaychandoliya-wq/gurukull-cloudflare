@@ -7,8 +7,9 @@ import {
   Modal, Popconfirm, Radio, Row, Col, Select, Space, Statistic, Tabs, Tag, Tooltip, Typography, Descriptions, Skeleton,
 } from 'antd';
 import {Table} from '../components/export/ExportTable';
+import {FeeDemandDrawer} from '../components/FeeDemandDrawer';
 import {
-  AuditOutlined, BellOutlined, DownloadOutlined, FileAddOutlined, FileDoneOutlined, PlusOutlined, ReloadOutlined,
+  AuditOutlined, BellOutlined, DownloadOutlined, FileAddOutlined, FileDoneOutlined, PlusOutlined, PrinterOutlined, ReloadOutlined,
   SettingOutlined, WalletOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '../services/api';
@@ -94,6 +95,7 @@ export const FeeLedgerPage: React.FC = () => {
   const [remindPreview, setRemindPreview] = useState<any>();
   const [remindBusy, setRemindBusy] = useState(false);
   const [remindForm] = Form.useForm();
+  const [demand, setDemand] = useState<{ studentId: string; label: string } | undefined>();
 
   const load = useCallback(async () => {
     try {
@@ -145,7 +147,7 @@ export const FeeLedgerPage: React.FC = () => {
   const invoiceCols = [...['invoiceNo', 'studentName', 'className', 'feeName', 'currency', 'dueDate'].map(key => ({ title: titleCase(key), dataIndex: key })),
     { title: 'Status', dataIndex: 'status', render: (value: string) => <Tag color={value === 'paid' ? 'green' : value === 'cancelled' ? 'default' : value === 'partially_paid' ? 'blue' : 'orange'}>{titleCase(value)}</Tag> },
     ...['amountMinor', 'paidMinor', 'concessionMinor', 'balanceMinor'].map(key => ({ title: titleCase(key), dataIndex: key, render: (value: number, row: any) => currencyAmount(value, row.currency) })),
-    { title: 'Actions', fixed: 'right' as const, render: (_: any, row: any) => <Space><Button size="small" disabled={row.status === 'cancelled' || row.balanceMinor <= 0} onClick={() => open(row, 'collect')}>Collect</Button><Button size="small" disabled={row.status === 'cancelled' || row.paidMinor !== 0 || row.concessionMinor !== 0} onClick={() => open(row, 'cancel')}>Cancel</Button><Tooltip title={row.status === 'cancelled' || row.balanceMinor <= 0 ? 'This invoice has no open balance.' : 'Remind this family about the open balance.'}><Button size="small" icon={<BellOutlined />} disabled={row.status === 'cancelled' || row.balanceMinor <= 0} onClick={() => openRemind(row)}>Remind</Button></Tooltip></Space> },
+    { title: 'Actions', fixed: 'right' as const, render: (_: any, row: any) => <Space><Button size="small" disabled={row.status === 'cancelled' || row.balanceMinor <= 0} onClick={() => open(row, 'collect')}>Collect</Button><Button size="small" disabled={row.status === 'cancelled' || row.paidMinor !== 0 || row.concessionMinor !== 0} onClick={() => open(row, 'cancel')}>Cancel</Button><Tooltip title={row.status === 'cancelled' || row.balanceMinor <= 0 ? 'This invoice has no open balance.' : 'Remind this family about the open balance.'}><Button size="small" icon={<BellOutlined />} disabled={row.status === 'cancelled' || row.balanceMinor <= 0} onClick={() => openRemind(row)}>Remind</Button></Tooltip><Tooltip title="View this student's complete open term bill and print the demand."><Button size="small" icon={<PrinterOutlined />} onClick={() => setDemand({ studentId: row.studentId, label: row.studentName })}>Demand</Button></Tooltip></Space> },
   ];
 
   const currency = options.currency;
@@ -189,5 +191,6 @@ export const FeeLedgerPage: React.FC = () => {
       </Form>
     </Modal>
     <Drawer title={correction?.kind === 'adjust' ? 'Adjust receipt' : correction?.kind === 'reverse' ? 'Record ledger reversal' : 'Cancel unpaid invoice'} open={!!correction} onClose={() => setCorrection(undefined)}>{correction && <><Alert type="info" showIcon message="Original history remains immutable." description="Corrections are recorded as a reversal and replacement entry." /><ActualCommandForm currency={currency} key={`${correction.row.id}-${correction.invoice.version}`} fields={correction.kind === 'adjust' ? [amount('amountMinor', 'Corrected amount in minor currency units'), amount('concessionMinor', 'Corrected concession', 0), { name: 'paymentMode', label: 'Payment method', type: 'select', options: choices(['cash', 'cheque', 'bank_transfer', 'upi', 'card']) }, { name: 'transactionRef', label: 'Non-cash transaction reference', optional: true }, { name: 'paidOn', label: 'Correction date', type: 'date' }, { name: 'reason', label: 'Reason', type: 'long' }] : [...(correction.kind === 'reverse' ? [{ name: 'paidOn', label: 'Correction date', type: 'date' as const }] : []), { name: 'reason', label: 'Reason', type: 'long' }]} extra={correction.kind === 'adjust' ? { invoiceId: correction.row.invoiceId, receiptId: correction.row.id, version: correction.invoice.version } : correction.kind === 'reverse' ? { invoiceId: correction.row.invoiceId, version: correction.invoice.version } : { version: correction.invoice.version }} url={correction.kind === 'adjust' ? `/api/admin/fees/invoices/${correction.row.invoiceId}/adjust` : `/api/admin/fees/${correction.kind === 'reverse' ? `receipts/${correction.row.id}/reverse` : `invoices/${correction.row.id}/cancel`}`} after={async () => { setCorrection(undefined); await load(); if (receipts !== null) await ledger(receiptPage); }} label="Save correction" /></>}</Drawer>
+    <FeeDemandDrawer studentId={demand?.studentId || ''} studentLabel={demand?.label} open={!!demand} onClose={() => setDemand(undefined)} />
   </Space>;
 };
