@@ -3,8 +3,8 @@ import {money,humanize,displayValue} from '../ux/format';
 import {ModuleTabs} from '../components/portal/ModuleTabs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert, App, Badge, Button, Card, Collapse, DatePicker, Divider, Drawer, Empty, Flex, Form, Input, InputNumber,
-  Modal, Popconfirm, Radio, Row, Col, Select, Space, Statistic, Tabs, Tag, Tooltip, Typography, Descriptions, Skeleton,
+  Alert, App, Badge, Button, Card, Collapse, DatePicker, Divider, Drawer, Empty, Flex, Form, Input, InputNumber, Col,
+  Modal, Popconfirm, Radio, Row, Select, Space, Statistic, Tabs, Tag, Tooltip, Typography, Descriptions, Skeleton,
 } from 'antd';
 import {Table} from '../components/export/ExportTable';
 import {FeeDemandDrawer} from '../components/FeeDemandDrawer';
@@ -96,6 +96,43 @@ export const FeeLedgerPage: React.FC = () => {
   const [remindBusy, setRemindBusy] = useState(false);
   const [remindForm] = Form.useForm();
   const [demand, setDemand] = useState<{ studentId: string; label: string } | undefined>();
+  const [gatewayStatus, setGatewayStatus] = useState<any>(null);
+  const [payLinks, setPayLinks] = useState<any[]>([]);
+  const [payLinkSummary, setPayLinkSummary] = useState<any>(null);
+  const [payLinkForm] = Form.useForm();
+
+  const loadPayLinks = useCallback(async () => {
+    try {
+      const [gw, links] = await Promise.all([
+        apiClient.get('/api/admin/fees/gateway'),
+        apiClient.get('/api/admin/fees/pay-links'),
+      ]);
+      setGatewayStatus(gw.data.data);
+      setPayLinks(links.data.data);
+      setPayLinkSummary(links.data.summary);
+    } catch (e: any) { setError(e.response?.data?.message || 'Payment links could not be loaded.'); }
+  }, []);
+
+  const createPayLink = async () => {
+    setError('');
+    try {
+      const values = await payLinkForm.validateFields();
+      const body: any = { ...values };
+      await apiClient.post('/api/admin/fees/pay-links', body, { headers: { 'Idempotency-Key': crypto.randomUUID() } });
+      message.success('Payment link created.');
+      payLinkForm.resetFields();
+      await loadPayLinks();
+      await load();
+    } catch (e: any) { setError(e.response?.data?.message || 'Payment link could not be created.'); }
+  };
+
+  const cancelPayLink = async (id: string) => {
+    try {
+      await apiClient.post(`/api/admin/fees/pay-links/${id}/cancel`, undefined, { headers: { 'Idempotency-Key': crypto.randomUUID() } });
+      message.success('Payment link cancelled.');
+      await loadPayLinks();
+    } catch (e: any) { setError(e.response?.data?.message || 'Payment link could not be cancelled.'); }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -107,8 +144,9 @@ export const FeeLedgerPage: React.FC = () => {
       ]);
       setRows(invoices.data.data); setTotal(invoices.data.meta.total); setGroups(feeGroups.data.data); setOptions(formOptions.data.data);
       setPolicy(numbering.data.data); setStructures(feeStructures.data.data); setSummary(report.data.data); setReminders(feeReminders.data.data); setRemindSummary(remindSum.data.data); setError('');
+      await loadPayLinks();
     } catch (e: any) { setError(e.response?.data?.message || 'Fees could not be loaded.'); }
-  }, [page]);
+  }, [page, loadPayLinks]);
   useEffect(() => { load(); }, [load]);
   const refreshReminders = async () => { try { const [r, s] = await Promise.all([apiClient.get('/api/admin/fees/reminders', { params: { per_page: 50 } }), apiClient.get('/api/admin/fees/reminders/summary')]); setReminders(r.data.data); setRemindSummary(s.data.data); } catch (e: any) { setError(e.response?.data?.message || 'Reminder activity could not be loaded.'); } };
   const openRemind = (row?: any) => { setRemindInvoice(row || undefined); setRemindOpen(true); setRemindPreview(undefined); remindForm.resetFields(); };
@@ -163,6 +201,41 @@ export const FeeLedgerPage: React.FC = () => {
     </Row>
     <ModuleTabs className="gk-fee-tabs" items={[
       { key: 'invoices', label: 'Invoices & collections', children: <Card title="Student invoices" extra={<Tag>{total} total</Tag>}><Table size="middle" rowKey="id" scroll={{ x: 1260 }} dataSource={rows} columns={invoiceCols} pagination={{ current: page, total, pageSize: 20, onChange: setPage }} locale={{ emptyText: <Empty description="No invoices have been issued for this school year." /> }} /><Divider /><Collapse ghost items={[{ key: 'issue', label: <Space><PlusOutlined /> Issue one invoice</Space>, children: <ActualCommandForm currency={currency} fields={invoiceFields} url="/api/admin/fees/invoices" after={load} label="Issue invoice" /> }]} /></Card> },
+      { key: 'pay-links', label: 'Payment links', children: <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <Card title="Payment gateway">
+          {!gatewayStatus ? <Skeleton active /> : <Space direction="vertical" size={12} style={{ width: '100%' }}>
+            <Typography.Text type="secondary">
+              Payment links are fully opt-in. The gateway stays disabled until the school stores real credentials and the admin runs the self-test. Nothing is charged and no external money is moved by this screen.
+            </Typography.Text>
+            {gatewayStatus.configured
+              ? <><Tag color={gatewayStatus.enabled ? 'green' : 'orange'}>{gatewayStatus.enabled ? 'Enabled' : 'Disabled until self-test'}</Tag>
+                <Button size="small" icon={<ReloadOutlined />} onClick={loadPayLinks}>Refresh</Button>
+                {!gatewayStatus.enabled && <Typography.Paragraph type="secondary" style={{ margin: 0 }}>Run the gateway self-test to enable payment links.</Typography.Paragraph>}
+              </>
+              : <Alert type="info" showIcon message="No gateway configured" description="Configure the gateway to create payment links. This does not add a paid integration; it only stores the school's own credentials until the admin enables them." />}
+            {gatewayStatus.webhookUrl && <Typography.Text type="secondary" style={{ fontSize: 12 }}>Webhook endpoint: <code>{gatewayStatus.webhookUrl}</code></Typography.Text>}
+          </Space>}
+        </Card>
+        <Card title="Payment links" extra={payLinkSummary ? <Space><Tag>{payLinkSummary.open} open</Tag><Tag color="green">{payLinkSummary.paidToday} paid today</Tag><Tag color="orange">{payLinkSummary.expired7d} expired (7 d)</Tag></Space> : null}>
+          <Collapse ghost items={[{ key: 'create', label: <Space><PlusOutlined /> Create payment link</Space>, children: gatewayStatus?.enabled ? <Form form={payLinkForm} layout="vertical" onFinish={createPayLink}>
+            <Form.Item name="studentId" label="Student" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" options={(options.students || []).map((s: any) => ({ value: s.value, label: s.label }))} placeholder="Select a student" /></Form.Item>
+            <Form.Item name="invoiceIds" label="Invoices" rules={[{ required: true }]}><Select mode="multiple" showSearch optionFilterProp="label" options={(options.invoices || []).map((i: any) => ({ value: i.value, label: `${i.label} · ${i.amountMinor} ${gatewayStatus?.currency || 'INR'}` }))} /></Form.Item>
+            <Form.Item name="expiresInDays" label="Expires in" rules={[{ required: true }]}><Select options={[{ value: 1, label: '1 day' }, { value: 3, label: '3 days' }, { value: 7, label: '7 days' }]} /></Form.Item>
+            <Button type="primary" htmlType="submit" disabled={!gatewayStatus?.enabled}>Create payment link</Button>
+          </Form> : <Typography.Paragraph type="secondary">Enable the gateway before creating links.</Typography.Paragraph> }]} />
+          <Divider />
+          <Table size="middle" rowKey="id" scroll={{ x: 1140 }} dataSource={payLinks} pagination={{ pageSize: 10, showSizeChanger: false }} locale={{ emptyText: <Empty description="No payment links yet." /> }} columns={[
+            { title: 'Link', dataIndex: 'id', render: (v: string) => <Typography.Link href={`/pay/${v}`}>{v.slice(0, 8)}…</Typography.Link> },
+            { title: 'Student', dataIndex: 'studentName' }, { title: 'Invoices', dataIndex: 'invoiceCount', width: 80 },
+            { title: 'Amount', dataIndex: 'amountPaise', render: (v: number) => currencyAmount(v, gatewayStatus?.currency) },
+            { title: 'Status', dataIndex: 'status', render: (v: string) => <Tag color={v === 'paid' ? 'green' : v === 'expired' || v === 'cancelled' ? 'default' : v === 'failed' ? 'red' : 'orange'}>{v}</Tag> },
+            { title: 'Receipt', dataIndex: 'receiptNo', render: (v: string) => v || '—' },
+            { title: 'Provider', dataIndex: 'providerRef', render: (v: string) => v || '—' },
+            { title: 'Created', dataIndex: 'createdAt', render: (v: number) => new Date(v * 1000).toLocaleString() },
+            { title: 'Actions', render: (_: any, row: any) => row.status === 'pending' || row.status === 'failed' ? <Popconfirm title="Cancel this payment link?" onConfirm={() => cancelPayLink(row.id)}><Button size="small" danger>Cancel</Button></Popconfirm> : null },
+          ]} />
+        </Card>
+      </Space> },
       { key: 'structures', label: 'Fee structures', children: <Space direction="vertical" size={16} style={{ width: '100%' }}><Card title="Current fee structures" extra={<Button type="primary" icon={<SettingOutlined />} onClick={standardGroups}>Prepare standard fee heads</Button>}><Typography.Paragraph type="secondary">Create actual billing periods, scope them to classes or sections, then assign them to the active roster.</Typography.Paragraph><Table size="middle" rowKey="id" scroll={{ x: 1180 }} dataSource={structures} columns={structureCols} pagination={{ pageSize: 10 }} locale={{ emptyText: <Empty description="No fee structures configured yet." /> }} /></Card><Card><Collapse ghost items={[{ key: 'structure', label: <Space><PlusOutlined /> Create fee structure</Space>, children: <ActualCommandForm currency={currency} fields={structureFields} url="/api/admin/fees/structures" after={load} label="Save fee structure" /> }, { key: 'opening', label: <Space><FileAddOutlined /> Import an opening balance</Space>, children: <ActualCommandForm currency={currency} fields={manualFields} url="/api/admin/fees/manual-balance" after={load} label="Record opening balance" /> }]} /></Card></Space> },
       { key: 'groups', label: 'Fee heads', children: <Card title="Fee heads" extra={<Button type="primary" icon={<PlusOutlined />} onClick={standardGroups}>Prepare standard heads</Button>}><Typography.Paragraph type="secondary">Fee heads are reusable labels such as tuition, transport or examination charges. Preparing standard heads only creates them when you explicitly confirm the action.</Typography.Paragraph><Table size="middle" rowKey="id" dataSource={groups} columns={[{ title: 'Name', dataIndex: 'name' }, { title: 'Description', dataIndex: 'description', render: (value: string) => value || '—' }]} locale={{ emptyText: <Empty description="No fee heads have been configured." /> }} /><Divider /><Collapse ghost items={[{ key: 'group', label: <Space><PlusOutlined /> Add a fee head</Space>, children: <ActualCommandForm currency={currency} fields={[{ name: 'name', label: 'Fee head name', max: 80 }, { name: 'description', label: 'Description', type: 'long', max: 255, optional: true }]} url="/api/admin/fees/groups" after={load} label="Add fee head" /> }]} /></Card> },
       { key: 'reminders', label: 'Reminders', children: <Space direction="vertical" size={16} style={{ width: '100%' }}><Row gutter={[16, 16]}><Col xs={12} md={6}><Card className="gk-fee-stat-card"><Statistic title="Queued" value={remindSummary?.queued ?? 0} prefix={<span style={{ color: '#2563eb' }}><BellOutlined /></span>} /></Card></Col><Col xs={12} md={6}><Card className="gk-fee-stat-card"><Statistic title="Sent" value={remindSummary?.sent ?? 0} prefix={<span style={{ color: '#16a34a' }}><FileDoneOutlined /></span>} /></Card></Col><Col xs={12} md={6}><Card className="gk-fee-stat-card"><Statistic title="Failed" value={remindSummary?.failed ?? 0} prefix={<span style={{ color: '#dc2626' }}><SettingOutlined /></span>} /></Card></Col><Col xs={12} md={6}><Card className="gk-fee-stat-card"><Statistic title="Consent coverage" value={remindSummary?.openFamilies ? Math.round((remindSummary.consentedFamilies / Math.max(1, remindSummary.openFamilies)) * 100) : 0} suffix="%" prefix={<span style={{ color: '#d97706' }}><WalletOutlined /></span>} /></Card></Col></Row>{remindSummary && <Typography.Text type="secondary">{remindSummary.consentedFamilies} of {remindSummary.openFamilies} families with open dues have WhatsApp fee-reminder consent. Record consent in the WhatsApp workspace to reach the rest.</Typography.Text>}<Card title="Recent reminders" extra={<Space><Badge status="default" text={`${reminders.length} records`} /><Button size="small" icon={<ReloadOutlined />} onClick={refreshReminders}>Refresh</Button><Button type="primary" size="small" icon={<BellOutlined />} onClick={() => openRemind()}>Send reminders</Button></Space>}><Table size="middle" rowKey="id" scroll={{ x: 1000 }} dataSource={reminders} pagination={{ pageSize: 10 }} locale={{ emptyText: <Empty description="No reminders queued yet." /> }} columns={[{ title: 'Time', dataIndex: 'createdAt', render: (v: any) => new Date(v * 1000).toLocaleString() }, { title: 'Student', dataIndex: 'studentName' }, { title: 'Fee', dataIndex: 'feeName' }, { title: 'Channel', dataIndex: 'channel', render: (v: string) => <Tag>{v}</Tag> }, { title: 'Recipient', dataIndex: 'recipient' }, { title: 'Status', dataIndex: 'status', render: (v: string, row: any) => { const map: Record<string, [string, string]> = { queued: ['Queued', 'blue'], processing: ['Sending', 'blue'], sent: ['Sent', 'green'], failed: ['Failed', 'red'], provider_not_configured: ['Provider not set up', 'orange'], skipped: ['Skipped', 'default'] }; const [label, color] = map[v] || [titleCase(v), 'default']; return <Tooltip title={row.detail || undefined}><Tag color={color}>{label}</Tag></Tooltip>; } }, { title: 'Action', render: (_: any, row: any) => (row.status === 'failed' || row.status === 'provider_not_configured') ? <Button size="small" onClick={() => retryReminder(row)}>Retry</Button> : null }]} /><Typography.Link href="/whatsapp" style={{ display: 'block', marginTop: 12 }}>Manage fee-reminder consent in the WhatsApp workspace →</Typography.Link></Card></Space> },

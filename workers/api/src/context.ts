@@ -35,6 +35,7 @@ export interface Env extends Partial<ApiBindings> {
   WHATSAPP_TEMPLATE_LANGUAGE?: string;
   WHATSAPP_ACCESS_TOKEN?: string;
   WHATSAPP_DEFAULT_COUNTRY_CODE?: string;
+  RAZORPAY_API_URL?: string;
 }
 export interface School { id: string; code: string; slug: string; name: string; status: string; timezone: string; currency: string; logo_r2_key: string | null }
 export interface User { id: string; school_id: string; user_type: Claims['userType']; full_name: string; email: string | null; mobile: string | null; roles?: string[] }

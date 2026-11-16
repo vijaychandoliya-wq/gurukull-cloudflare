@@ -61,6 +61,11 @@ export function setupRequestAllowed(method:string,path:string) {
  if(method==='GET'&&/^\/api\/admin\/fees\/(receipts|invoices|demand\/[A-Za-z0-9_-]+)$/.test(path))return true;
  if(method==='PUT'&&path==='/api/admin/fees/policy')return true;
  if(method==='POST'&&['/api/admin/fees/groups','/api/admin/fees/invoices','/api/admin/fees/payments','/api/admin/fees/reminders'].includes(path))return true;
+ if(method==='POST'&&/^\/api\/admin\/fees\/(invoices\/[A-Za-z0-9_-]+\/cancel|receipts\/[A-Za-z0-9_-]+\/reverse|reminders\/[A-Za-z0-9_-]+\/retry|structures\/[A-Za-z0-9_-]+\/remind-all|gateway\/self-test)$/.test(path))return true;
+ if(method==='PUT'&&path==='/api/admin/fees/gateway')return true;
+ if(method==='GET'&&path==='/api/admin/fees/gateway')return true;
+ if(method==='GET'&&/^\/api\/admin\/fees\/(pay-links|pay-links\/[A-Za-z0-9_-]+\/cancel)$/.test(path))return true;
+ if(method==='POST'&&/^\/api\/admin\/fees\/pay-links$/.test(path))return true;
  if(method==='POST'&&/^\/api\/admin\/fees\/(invoices\/[A-Za-z0-9_-]+\/cancel|receipts\/[A-Za-z0-9_-]+\/reverse|reminders\/[A-Za-z0-9_-]+\/retry|structures\/[A-Za-z0-9_-]+\/remind-all)$/.test(path))return true;
  if(/^\/api\/admin\/fees(\/(invoices|groups|payments))?$/.test(path))return ['GET','POST'].includes(method);
  if(/^\/api\/admin\/(id-cards|teacher-id-cards|staff-id-cards)(\/(options|students))?$/.test(path))return method==='GET';
