@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
-import {Alert,App,Button,Card,DatePicker,Form,Input,Modal,Select,Space,Table,Typography} from 'antd';
+import {Alert,App,Button,Card,DatePicker,Form,Input,Modal,Select,Space,Typography} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import {apiClient} from '../services/api';
 import {WorkflowPage,type WorkflowSpec} from './SchoolWorkflowPages';
 const alumni:WorkflowSpec={path:'alumni',title:'Alumni',addLabel:'Register actual alumnus',archive:true,columns:['name','email','phone','graduationYear','graduationDate','profession','company','city'],notice:'Register actual historical alumni or edit graduates created through Promotion. No invitations or alumni login privileges are created. Archival preserves the record.',fields:[{name:'studentId',label:'Existing graduate student, if applicable',type:'select',options:'students',immutable:true},{name:'name',label:'Actual name',required:true,max:150},{name:'email',label:'Actual email',max:150},{name:'phone',label:'Actual phone (10 digits)',max:10},{name:'graduationYear',label:'Actual graduation year',required:true,type:'number',min:1900,max:2200},{name:'graduationDate',label:'Actual graduation date, if known',type:'date'},{name:'profession',label:'Profession, if known',max:150},{name:'company',label:'Company, if known',max:150},{name:'city',label:'City, if known',max:100},{name:'notes',label:'Notes',type:'long',max:1000}]};

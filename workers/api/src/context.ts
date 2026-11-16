@@ -3,6 +3,8 @@ import { digest, fail, verifyJwt, type Claims } from './security.js';
 import { setupRequestAllowed } from './admin-access.js';
 
 export interface Env extends Partial<ApiBindings> {
+  // Existing Static Assets binding, omitted by this Wrangler version's generated declaration.
+  ASSETS?: Fetcher;
   APP_RELEASE?: string;
   SOURCE_SHA?: string;
   EMAIL_DELIVERY_ENABLED?: string;
@@ -26,9 +28,14 @@ export interface Env extends Partial<ApiBindings> {
   WHATSAPP_GRAPH_API_URL?: string;
   WHATSAPP_PHONE_NUMBER_ID?: string;
   WHATSAPP_PASSWORD_TEMPLATE?: string;
+  // Provider-approved template used for fee reminders; empty until the owner
+  // stores the Meta-approved template name. Reminders queue regardless and
+  // surface as provider_not_configured until it is set.
+  WHATSAPP_FEE_TEMPLATE?: string;
   WHATSAPP_TEMPLATE_LANGUAGE?: string;
   WHATSAPP_ACCESS_TOKEN?: string;
   WHATSAPP_DEFAULT_COUNTRY_CODE?: string;
+  RAZORPAY_API_URL?: string;
 }
 export interface School { id: string; code: string; slug: string; name: string; status: string; timezone: string; currency: string; logo_r2_key: string | null }
 export interface User { id: string; school_id: string; user_type: Claims['userType']; full_name: string; email: string | null; mobile: string | null; roles?: string[] }

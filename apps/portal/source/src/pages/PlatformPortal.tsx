@@ -1,7 +1,9 @@
+import {attachExportSource} from '../components/export/exportSource';
 import {PasswordChangeForm} from '../components/PasswordChangeForm';
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Alert, App, Button, Card, Descriptions, Form, Input, Layout, Modal, Select, Space, Table, Tag, Typography,Tabs } from 'antd';
+import {Alert,App,Button,Card,Descriptions,Form,Input,Layout,Modal,Select,Space,Tag,Typography,Tabs} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import { BankOutlined, CheckCircleOutlined, HistoryOutlined, LogoutOutlined, PlusOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import {humanize} from '../ux/format';
 import { ThemeSwitcher } from '../components/ThemeSwitcher';
@@ -11,7 +13,7 @@ const PLATFORM_TOKEN = 'gurukul_platform_token';
 const PLATFORM_SCHOOL = 'gurukul_platform_school';
 const client = axios.create({ baseURL: '', headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
 client.interceptors.request.use(config => { const token=localStorage.getItem(PLATFORM_TOKEN), code=localStorage.getItem(PLATFORM_SCHOOL); if(token)config.headers.Authorization=`Bearer ${token}`; if(code)config.headers['x-school-code']=code; return config; });
-client.interceptors.response.use(response=>response,error=>{if(error.response?.status===401&&!error.config?.url?.endsWith('/login')){window.dispatchEvent(new Event('gurukul-platform-session-expired'));}return Promise.reject(error);});
+client.interceptors.response.use(response=>attachExportSource(response,client),error=>{if(error.response?.status===401&&!error.config?.url?.endsWith('/login')){window.dispatchEvent(new Event('gurukul-platform-session-expired'));}return Promise.reject(error);});
 
 type School = { id:string; code:string; slug:string; name:string; status:string; timezone:string; currency:string; hostname?:string; address?:string|null; administratorCount?:number };
 type LoginActivity = { sessionId:string; createdAt:number; expiresAt:number; revokedAt?:number|null; deviceId?:string|null; platform:string; fullName:string; email?:string|null; mobile?:string|null; userType:string; userStatus:string; schoolCode:string; schoolName:string; hostname?:string|null; sessionStatus:'active'|'expired'|'revoked' };

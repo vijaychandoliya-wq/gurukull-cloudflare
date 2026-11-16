@@ -1,5 +1,6 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
-import {Alert,App,Button,Card,Form,Input,Select,Space,Table} from 'antd';
+import {Alert,App,Button,Card,Form,Input,Select,Space} from 'antd';
+import {Table} from './export/ExportTable';
 import {apiClient} from '../services/api';
 
 type Block={senderPhone:string;recipientPhone:string;evidence:string;version:number};

@@ -1,23 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  Avatar,
-  Button,
-  Card,
-  Descriptions,
-  Drawer,
-  Empty,
-  Flex,
-  List,
-  Modal,
-  Form,
-  Input,
-  Select,
-  Space,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
+import {Alert,Avatar,Button,Card,Descriptions,Drawer,Empty,Flex,List,Modal,Form,Input,Select,Space,Tag,Typography} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import type { ColumnsType } from 'antd/es/table';
 import {
   EyeOutlined,

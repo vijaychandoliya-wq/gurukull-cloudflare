@@ -1,5 +1,6 @@
 import React,{useCallback,useEffect,useState} from 'react';
-import {Alert,Button,Card,Descriptions,Empty,Flex,Skeleton,Space,Table,Tag,Typography} from 'antd';
+import {Alert,Button,Card,Descriptions,Empty,Flex,Skeleton,Space,Tag,Typography} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import {ArrowLeftOutlined,EditOutlined} from '@ant-design/icons';
 import {Link,useNavigate,useParams,useSearchParams} from 'react-router-dom';
 import {apiClient} from '../services/api';

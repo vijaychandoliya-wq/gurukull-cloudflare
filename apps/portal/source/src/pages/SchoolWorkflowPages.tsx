@@ -1,5 +1,6 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
-import {Alert,App,Button,Card,DatePicker,Drawer,Form,Input,InputNumber,Modal,Select,Space,Steps,Table,Tag,Typography,Radio,Descriptions,Flex,Empty,Collapse} from 'antd';
+import {Alert,App,Button,Card,DatePicker,Drawer,Form,Input,InputNumber,Modal,Select,Space,Steps,Tag,Typography,Radio,Descriptions,Flex,Empty,Collapse} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import dayjs from 'dayjs';
 import {apiClient} from '../services/api';
 import {useAuth} from '../context/AuthContext';

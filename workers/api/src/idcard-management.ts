@@ -9,11 +9,16 @@ export function registerIdCardManagement(app: Hono<AppEnv>) {
     const s = c.get('school');
     const schoolId = u.school_id;
 
-    const [configRes, classesRes, yearRes] = await db(c).batch([
+    const [configRes, logoRes, classesRes, yearRes] = await db(c).batch([
       db(c).prepare(`
         SELECT address
         FROM school_configuration
         WHERE school_id = ?
+      `).bind(schoolId),
+      db(c).prepare(`
+        SELECT logo_r2_key
+        FROM schools
+        WHERE id = ?
       `).bind(schoolId),
       db(c).prepare(`
         SELECT cl.id, cl.name, COUNT(st.id) AS studentCount
@@ -33,7 +38,9 @@ export function registerIdCardManagement(app: Hono<AppEnv>) {
 
     if (!configRes.success || !classesRes.success) fail(503, 'OPTIONS_READ_FAILED');
 
-    const config = configRes.results[0] as { address?: string; board?: string; logo_url?: string } | undefined;
+    const config = configRes.results[0] as { address?: string; board?: string } | undefined;
+    const logoRow = logoRes.results[0] as { logo_r2_key: string | null } | undefined;
+    const logoUrl = logoRow?.logo_r2_key ? `/api/admin/school/logo` : null;
     const year = (yearRes.results[0] as { name?: string } | undefined)?.name || null;
 
     const classes = (classesRes.results || []).map((row: any) => ({
@@ -47,7 +54,7 @@ export function registerIdCardManagement(app: Hono<AppEnv>) {
       data: {
         school: {
           name: s.name,
-          logo: null,
+          logo: logoUrl,
           address: config?.address || null,
           board: null,
           academicYear: year

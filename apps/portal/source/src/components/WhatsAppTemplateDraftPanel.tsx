@@ -1,5 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {Alert,App,Button,Card,Form,Input,Select,Space,Table,Tag} from 'antd';
+import {Alert,App,Button,Card,Form,Input,Select,Space,Tag} from 'antd';
+import {Table} from './export/ExportTable';
 import {apiClient} from '../services/api';
 
 type Draft={purpose:'school_notice'|'fee_reminder';locale:string;body:string;version:number};

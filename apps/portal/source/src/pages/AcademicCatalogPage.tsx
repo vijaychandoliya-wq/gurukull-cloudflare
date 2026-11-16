@@ -1,7 +1,8 @@
 import {useDirtyForm} from '../components/portal/UX';
 import {ModuleTabs} from '../components/portal/ModuleTabs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, App, Button, Card, Form, Input, InputNumber, Select, Space, Table, Tabs, Typography,Drawer } from 'antd';
+import {Alert,App,Button,Card,Form,Input,InputNumber,Select,Space,Tabs,Typography,Drawer} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../services/api';
 import {useCopyCatalog} from '../i18n/useCopyCatalog';

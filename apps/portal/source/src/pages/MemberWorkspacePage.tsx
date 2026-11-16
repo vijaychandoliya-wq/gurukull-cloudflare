@@ -1,7 +1,8 @@
 import {humanize,displayValue} from '../ux/format';
 import {BorrowerLoans} from './BorrowerLoans';
 import React,{useEffect,useState} from 'react';
-import {Alert,Card,Descriptions,Space,Table,Typography} from 'antd';
+import {Alert,Card,Descriptions,Space,Typography} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import {apiClient} from '../services/api';
 export const MemberWorkspacePage:React.FC=()=>{
  const [data,setData]=useState<any>(),[error,setError]=useState<string|null>(null);

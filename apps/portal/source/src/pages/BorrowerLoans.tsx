@@ -1,6 +1,7 @@
 import {humanize,displayValue} from '../ux/format';
 import {useEffect,useState} from 'react';
-import {Alert,Card,Table} from 'antd';
+import {Alert,Card} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import {apiClient} from '../services/api';
 export function BorrowerLoans({studentId}:{studentId?:string}){
  const [rows,setRows]=useState<any[]>([]),[error,setError]=useState(''),[page,setPage]=useState(1),[total,setTotal]=useState(0),[loading,setLoading]=useState(false);

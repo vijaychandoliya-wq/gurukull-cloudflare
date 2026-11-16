@@ -122,7 +122,8 @@ describe('Fees & ID Cards Management Endpoints', () => {
         return stmt;
       },
       batch: async () => [
-        { success: true, results: [{ address: 'School Road', board: 'CBSE', logo_url: null }] },
+        { success: true, results: [{ address: 'School Road', board: 'CBSE' }] },
+        { success: true, results: [{ logo_r2_key: null }] },
         { success: true, results: [{ id: 'cls_1', name: 'Class 10', studentCount: 45 }] },
         { success: true, results: [{ name: '2026-2027' }] }
       ]

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Button, Card, List, Space, Tag, Typography, Upload,Steps,Table,Progress,Checkbox,Select,Flex } from 'antd';
+import {Alert,Button,Card,List,Space,Tag,Typography,Upload,Steps,Progress,Checkbox,Select,Flex} from 'antd';
+import {Table} from './export/ExportTable';
 import { DownloadOutlined, FileExcelOutlined, UploadOutlined } from '@ant-design/icons';
 import { read, utils, writeFile } from 'xlsx';
 import { apiClient } from '../services/api';

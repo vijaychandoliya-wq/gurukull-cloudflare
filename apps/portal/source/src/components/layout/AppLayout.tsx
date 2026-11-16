@@ -104,7 +104,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   ];
 
   return (
-    <Layout className="gk-shell"><a href="#portal-main" className="gk-skip-link">{text('Skip to content')}</a>
+    <Layout className="gk-shell" data-school-name={schoolName||''}><a href="#portal-main" className="gk-skip-link">{text('Skip to content')}</a>
       <Sider
         theme="light"
         width={248}

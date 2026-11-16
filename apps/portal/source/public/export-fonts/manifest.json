@@ -1,0 +1,93 @@
+[
+  {
+    "family": "notosans",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSans/NotoSans-Regular.ttf",
+    "sha256": "b85c38ecea8a7cfb39c24e395a4007474fa5a4fc864f6ee33309eb4948d232d5",
+    "gitBlobSha": "d55220958aa51eeeb85048d746eabe43d2cd9f14",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosansdevanagari",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf",
+    "sha256": "385e78e6359a9d88a0f243d53b1209d7548361ba2194e2b9ec779bcaa7e8949d",
+    "gitBlobSha": "d9167f632b699b82eb81e0e0ad1ddb89bcdbd6c3",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosanstamil",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansTamil/NotoSansTamil-Regular.ttf",
+    "sha256": "6532db33b8b264abe3a098a40619feb489b5ddf5ab1d2b46e72b51eeb548001b",
+    "gitBlobSha": "e64d13fe042ce2705eba95658c481552044f3476",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosansbengali",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansBengali/NotoSansBengali-Regular.ttf",
+    "sha256": "6300c5370cd688b0641343de4c786de6d412bb6c578d129dae75e93a0322dcab",
+    "gitBlobSha": "3e66c1a9ea885b999ce9736aa3b509cc51935fff",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosansgujarati",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansGujarati/NotoSansGujarati-Regular.ttf",
+    "sha256": "8d5c22d7b729ef2839e6d1fe2cde77b2d083907be3659bca63676baa76e01fd6",
+    "gitBlobSha": "6fd1b2fee38f43a1f5587a651b238f98703f5cf2",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosansgurmukhi",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansGurmukhi/NotoSansGurmukhi-Regular.ttf",
+    "sha256": "bbde4d85fdfb998eff6921cb2c7a9a7924a1c95560a6aa9a06172530e4f596da",
+    "gitBlobSha": "196ae9fc62eb64ee05e981498d0f361fa7f782f5",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosansoriya",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansOriya/NotoSansOriya-Regular.ttf",
+    "sha256": "b8d8bd784b9d09c0668233437359913c93a3a83bf37d92ecde859e2bc728a0e0",
+    "gitBlobSha": "dab2fac1a343308e09dccf68b5d3cba4816376fe",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosansmalayalam",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansMalayalam/NotoSansMalayalam-Regular.ttf",
+    "sha256": "42eb462ff13e820ebbeaaec4e7b426bd1de145d02cef8b634f5a3efd376b513c",
+    "gitBlobSha": "49312218c4b22396446706e76745c4027f6ae0ff",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosanskannada",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansKannada/NotoSansKannada-Regular.ttf",
+    "sha256": "5c804033c57f2c2844b1cd425f45b9a78d81d2f71bf358351b24258ebe168aea",
+    "gitBlobSha": "c24dd3a5f3b98e3016527dfb0b088193c992ab83",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosanstelugu",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansTelugu/NotoSansTelugu-Regular.ttf",
+    "sha256": "2c05072e8018a9be1cb0582953d9edf9a0cf129cdfb74e611de763b09c411f7f",
+    "gitBlobSha": "9ee772d19118901a0ac93f3f7efe1d6b2c0b61f8",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosansmeeteimayek",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansMeeteiMayek/NotoSansMeeteiMayek-Regular.ttf",
+    "sha256": "b68597a00e21d3ad873f937f36552d63f1cbad457f251ab1c3654e41d5dc24fa",
+    "gitBlobSha": "cedc2db6ac2075cac194e2d46de3f15a4c109d52",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notosansolchiki",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansOlChiki/NotoSansOlChiki-Regular.ttf",
+    "sha256": "8aa3fe0d4cafc878023061ff4db4de90a4334153716d7b69d60e9a2c8e06e18d",
+    "gitBlobSha": "47e665130cff2cc6145a9d6fc2738edc7d26364d",
+    "license": "SIL OFL 1.1"
+  },
+  {
+    "family": "notonaskharabic",
+    "source": "https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoNaskhArabic/NotoNaskhArabic-Regular.ttf",
+    "sha256": "2f4b88e6ee50fa82c617e2d1d4ba18281cb1c6cd71c3af3ec64970c23995db4b",
+    "gitBlobSha": "0259f6672e2a55a2de7a08ccca8c1eb763e585f3",
+    "license": "SIL OFL 1.1"
+  }
+]

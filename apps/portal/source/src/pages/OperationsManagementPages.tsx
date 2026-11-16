@@ -1,6 +1,7 @@
 import {ModuleTabs} from '../components/portal/ModuleTabs';
 import React,{useRef,useState} from 'react';
-import {Alert,App,Button,DatePicker,Drawer,Form,Input,InputNumber,Select,Space,Table,Tabs,Typography} from 'antd';
+import {Alert,App,Button,DatePicker,Drawer,Form,Input,InputNumber,Select,Space,Tabs,Typography} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import {apiClient} from '../services/api';
 import {WorkflowPage,type WorkflowSpec} from './SchoolWorkflowPages';
 const choices=(values:string[])=>values.map(value=>({value,label:value.replace(/_/g,' ')}));

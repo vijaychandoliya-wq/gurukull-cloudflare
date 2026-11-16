@@ -1,5 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {Alert,App,Button,Card,Checkbox,Form,Input,Select,Space,Table} from 'antd';
+import {Alert,App,Button,Card,Checkbox,Form,Input,Select,Space} from 'antd';
+import {Table} from './export/ExportTable';
 import {apiClient} from '../services/api';
 
 type Consent={recipientId:string;senderPhone:string;recipientPhone:string;purpose:'school_notice'|'fee_reminder';state:'granted'|'withdrawn';source:string;evidence:string;version:number};

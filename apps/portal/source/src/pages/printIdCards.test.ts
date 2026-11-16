@@ -18,3 +18,26 @@ it('removes the print frame when printing fails',async()=>{
  const original=document.body.append.bind(document.body);vi.spyOn(document.body,'append').mockImplementation((...nodes)=>{original(...nodes);const frame=nodes.find(n=>n instanceof HTMLIFrameElement) as HTMLIFrameElement|undefined;if(frame?.contentWindow){frame.contentWindow.focus=vi.fn();frame.contentWindow.print=vi.fn(()=>{throw Error('Printer unavailable');});}});
  await expect(printIdCards(sheet)).rejects.toThrow('Printer unavailable');expect(document.querySelector('iframe')).toBeNull();
 });
+it('fails cleanly when a page stylesheet cannot be loaded into the print document',async()=>{
+ const sheet=document.createElement('div');sheet.innerHTML='<article class="gk-id-card">Card</article>';document.body.append(sheet);
+ const link=document.createElement('link');link.rel='stylesheet';document.head.append(link);
+ const original=document.body.append.bind(document.body);
+ vi.spyOn(document.body,'append').mockImplementation((...nodes)=>{original(...nodes);const frame=nodes.find(n=>n instanceof HTMLIFrameElement) as HTMLIFrameElement|undefined;if(frame){queueMicrotask(()=>{const clone=frame.contentDocument?.querySelector('link');clone?.dispatchEvent(new Event('error'));});}});
+ await expect(printIdCards(sheet)).rejects.toThrow('print styles could not be loaded');
+ expect(document.querySelector('iframe')).toBeNull();
+ link.remove();
+});
+it('rejects when the print frame was removed before printing finished',async()=>{
+ const sheet=document.createElement('div');sheet.innerHTML='<article class="gk-id-card">Card</article>';document.body.append(sheet);
+ const original=document.body.append.bind(document.body);
+ vi.spyOn(document.body,'append').mockImplementation((...nodes)=>{original(...nodes);const frame=nodes.find(n=>n instanceof HTMLIFrameElement) as HTMLIFrameElement|undefined;if(frame){frame.remove();}});
+ await expect(printIdCards(sheet)).rejects.toThrow('Printing was cancelled');expect(document.querySelector('iframe')).toBeNull();
+});
+it('replaces the previous print frame on a second call',async()=>{
+ const sheet=document.createElement('div');sheet.innerHTML='<article class="gk-id-card">Card</article>';document.body.append(sheet);
+ const original=document.body.append.bind(document.body);const frames:HTMLIFrameElement[]=[];
+ vi.spyOn(document.body,'append').mockImplementation((...nodes)=>{original(...nodes);const frame=nodes.find(n=>n instanceof HTMLIFrameElement) as HTMLIFrameElement|undefined;if(frame){frames.push(frame);if(frame.contentWindow){frame.contentWindow.focus=vi.fn();frame.contentWindow.print=vi.fn();}}});
+ await printIdCards(sheet);expect(frames.length).toBe(1);expect(frames[0].isConnected).toBe(true);
+ await printIdCards(sheet);expect(frames[1].isConnected).toBe(true);expect(frames[0].isConnected).toBe(false);
+ document.querySelector('iframe')?.remove();
+});

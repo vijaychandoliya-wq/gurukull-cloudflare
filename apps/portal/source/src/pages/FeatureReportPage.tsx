@@ -1,5 +1,6 @@
 import React,{useCallback,useEffect,useState} from 'react';
-import {Alert,Button,Card,Table,Tag,Typography,Input,Select,Space} from 'antd';
+import {Alert,Button,Card,Tag,Typography,Input,Select,Space} from 'antd';
+import {Table} from '../components/export/ExportTable';
 import {Link,useLocation} from 'react-router-dom';
 import {adminFeatures} from '../../../../../packages/contracts/src/admin-features';
 import {apiClient} from '../services/api';
