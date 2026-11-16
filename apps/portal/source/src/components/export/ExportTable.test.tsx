@@ -24,7 +24,7 @@ it('opens the export history and restores a previous job',async()=>{
  vi.mocked(apiClient.get).mockResolvedValue({data:{data:[{id:'old1',title:'Teachers',status:'ready',format:'pdf',total:30,done:30,files:2}]}});
  await act(async()=>root.render(<Table rowKey="id" columns={[{title:'Name',dataIndex:'name'}]} dataSource={response.data.data}/>));
  await click('Export all records');
- await act(async()=>{const close=document.querySelector('.ant-modal-close')!;close.click();});
+ await act(async()=>{(document.querySelector('.ant-modal-close') as HTMLElement|null)?.click();});
  await click('My exports');
  expect(document.body.textContent).toContain('Teachers · ready · 30 records');
 });
@@ -50,7 +50,7 @@ it('downloads a ready export as a blob',async()=>{
  vi.mocked(apiClient.get).mockResolvedValue({data:new Blob(['x'])});
  const clickSpy=vi.fn();let lastAnchor:HTMLAnchorElement|undefined;
  const originalCreate=document.createElement.bind(document);
- vi.spyOn(document,'createElement').mockImplementation((tag:string,...rest:any[])=>{const el=originalCreate(tag,...rest);if(tag==='a'){el.click=clickSpy;lastAnchor=el as HTMLAnchorElement;}return el;});
+ vi.spyOn(document,'createElement').mockImplementation((tag:string,...rest:any[])=>{const el=originalCreate(tag,...rest);if(tag==='a'){(el as HTMLAnchorElement).click=clickSpy;lastAnchor=el as HTMLAnchorElement;}return el;});
  vi.spyOn(URL,'createObjectURL').mockReturnValue('blob:fake');
  const revoke=vi.spyOn(URL,'revokeObjectURL');
  await act(async()=>root.render(<Table rowKey="id" columns={[{title:'Name',dataIndex:'name'}]} dataSource={response.data.data}/>));

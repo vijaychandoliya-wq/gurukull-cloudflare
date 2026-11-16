@@ -71,7 +71,7 @@ it('prints without a logo when the logo request is not ok',async()=>{
  (globalThis as any).IS_REACT_ACT_ENVIRONMENT=true;
  const create=document.createElement.bind(document);let frame:HTMLIFrameElement|undefined;const print=vi.fn();
  const spy=vi.spyOn(document,'createElement').mockImplementation(((tag:string)=>{const element=create(tag);if(tag==='iframe'){frame=element as HTMLIFrameElement;queueMicrotask(()=>{if(frame?.contentWindow){frame.contentWindow.print=print;frame.contentWindow.focus=vi.fn();}});}return element;}) as any);
- const fetchSpy=vi.spyOn(globalThis,'fetch').mockResolvedValue({ok:false,blob:async()=>new Blob([],'image/png')} as any);
+ const fetchSpy=vi.spyOn(globalThis,'fetch').mockResolvedValue({ok:false,blob:async()=>new Blob([],{type:'image/png'})} as any);
  try{
   await act(async()=>printCertificate(record,CERTIFICATE_DESIGNS[0],{logo:'/api/admin/school/logo'}));
   expect(frame?.contentDocument?.querySelector('img')).toBeNull();
