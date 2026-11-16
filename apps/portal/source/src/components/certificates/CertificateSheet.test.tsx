@@ -42,6 +42,42 @@ it('reports a browser that cannot create a print document and cleans up the fram
  try{await expect(printCertificate(record,CERTIFICATE_DESIGNS[0])).rejects.toThrow('could not open');expect(frame?.isConnected).toBe(false);}finally{spy.mockRestore();frame?.remove();}
 });
 
+it('embeds the school logo as an inline data image when a logo URL is provided',async()=>{
+ (globalThis as any).IS_REACT_ACT_ENVIRONMENT=true;
+ const create=document.createElement.bind(document);let frame:HTMLIFrameElement|undefined;const print=vi.fn();
+ const spy=vi.spyOn(document,'createElement').mockImplementation(((tag:string)=>{const element=create(tag);if(tag==='iframe'){frame=element as HTMLIFrameElement;queueMicrotask(()=>{if(frame?.contentWindow){frame.contentWindow.print=print;frame.contentWindow.focus=vi.fn();}});}return element;}) as any);
+ const fetchSpy=vi.spyOn(globalThis,'fetch').mockResolvedValue({ok:true,blob:async()=>new Blob(['logo-bytes'],{type:'image/png'})} as any);
+ try{
+  await act(async()=>printCertificate(record,CERTIFICATE_DESIGNS[0],{logo:'/api/admin/school/logo'}));
+  const img=frame?.contentDocument?.querySelector('img');
+  expect(img).toBeTruthy();
+  expect((img as HTMLImageElement).src.startsWith('data:')).toBe(true);
+ }finally{fetchSpy.mockRestore();spy.mockRestore();frame?.remove();}
+});
+
+it('prints without a logo when the logo fetch fails',async()=>{
+ (globalThis as any).IS_REACT_ACT_ENVIRONMENT=true;
+ const create=document.createElement.bind(document);let frame:HTMLIFrameElement|undefined;const print=vi.fn();
+ const spy=vi.spyOn(document,'createElement').mockImplementation(((tag:string)=>{const element=create(tag);if(tag==='iframe'){frame=element as HTMLIFrameElement;queueMicrotask(()=>{if(frame?.contentWindow){frame.contentWindow.print=print;frame.contentWindow.focus=vi.fn();}});}return element;}) as any);
+ const fetchSpy=vi.spyOn(globalThis,'fetch').mockRejectedValue(new Error('network down'));
+ try{
+  await act(async()=>printCertificate(record,CERTIFICATE_DESIGNS[0],{logo:'/api/admin/school/logo'}));
+  expect(frame?.contentDocument?.querySelector('img')).toBeNull();
+  expect(print).toHaveBeenCalledOnce();
+ }finally{fetchSpy.mockRestore();spy.mockRestore();frame?.remove();}
+});
+
+it('prints without a logo when the logo request is not ok',async()=>{
+ (globalThis as any).IS_REACT_ACT_ENVIRONMENT=true;
+ const create=document.createElement.bind(document);let frame:HTMLIFrameElement|undefined;const print=vi.fn();
+ const spy=vi.spyOn(document,'createElement').mockImplementation(((tag:string)=>{const element=create(tag);if(tag==='iframe'){frame=element as HTMLIFrameElement;queueMicrotask(()=>{if(frame?.contentWindow){frame.contentWindow.print=print;frame.contentWindow.focus=vi.fn();}});}return element;}) as any);
+ const fetchSpy=vi.spyOn(globalThis,'fetch').mockResolvedValue({ok:false,blob:async()=>new Blob([],'image/png')} as any);
+ try{
+  await act(async()=>printCertificate(record,CERTIFICATE_DESIGNS[0],{logo:'/api/admin/school/logo'}));
+  expect(frame?.contentDocument?.querySelector('img')).toBeNull();
+ }finally{fetchSpy.mockRestore();spy.mockRestore();frame?.remove();}
+});
+
 it('replaces a previous print document rather than leaving certificate data in the page',async()=>{
  (globalThis as any).IS_REACT_ACT_ENVIRONMENT=true;const create=document.createElement.bind(document);const frames:HTMLIFrameElement[]=[];
  const spy=vi.spyOn(document,'createElement').mockImplementation(((tag:string)=>{const element=create(tag);if(tag==='iframe'){const f=element as HTMLIFrameElement;frames.push(f);queueMicrotask(()=>{if(f.contentWindow){f.contentWindow.print=vi.fn();f.contentWindow.focus=vi.fn();}});}return element;}) as any);
